@@ -1,5 +1,6 @@
 .DS_Store
 node_modules/
+dist/
 *.log
 .vscode/
 .idea/
@@ -12,4 +13,3 @@ node_modules/
 .claude/scheduled_tasks.lock
 .claude/.cache/
 .claude/worktrees/
-.vercel

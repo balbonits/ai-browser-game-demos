@@ -8,6 +8,7 @@
 .vercel
 .DS_Store
 node_modules
+dist
 *.log
 
 # Documentation isn't needed at runtime — the docs folder is a github-only artifact.
@@ -19,5 +20,6 @@ AGENTS.md
 CLAUDE.md
 CHANGELOG.md
 
-# License files DO ship — they're linked from the legal-strip footer in each game.
+# License files DO ship — Vite copies them into dist/ via the
+# rootLicenseFiles plugin so per-game footer links keep working.
 # (LICENSE, LICENSE-ASSETS — explicitly NOT excluded here.)

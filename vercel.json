@@ -4,7 +4,7 @@
   "trailingSlash": false,
   "headers": [
     {
-      "source": "/games/(.*)/assets/(.*)",
+      "source": "/games/(.*)\\.(png|jpg|jpeg|webp|gif|svg)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]

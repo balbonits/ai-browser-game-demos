@@ -1,113 +1,36 @@
 <!doctype html>
 <html lang="en" data-theme="light">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>games · jdilig.me</title>
-  <meta name="description" content="A library of browser games built entirely by AI under John Dilig's direction. Code by Claude Code, art by PixelLab, audio synthesized in code." />
-  <meta name="copyright" content="© 2026 John Dilig" />
-  <meta name="author" content="John Dilig" />
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>games · jdilig.me</title>
+    <meta name="description" content="A library of browser games built entirely by AI under John Dilig's direction. Code by Claude Code, art by PixelLab, audio synthesized in code." />
+    <meta name="copyright" content="© 2026 John Dilig" />
+    <meta name="author" content="John Dilig" />
 
-  <link rel="icon" type="image/png" href="/logo.png" />
-  <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
 
-  <!-- Theme bootstrap: read saved theme before paint to avoid flash. -->
-  <script>
-    (function () {
-      try {
-        var saved = localStorage.getItem('jdilig-theme');
-        if (saved === 'dark' || saved === 'light') {
-          document.documentElement.dataset.theme = saved;
-        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          document.documentElement.dataset.theme = 'dark';
-        }
-      } catch (_) {}
-    })();
-  </script>
+    <!-- Theme bootstrap: read saved theme before paint to avoid flash. -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('jdilig-theme');
+          if (saved === 'dark' || saved === 'light') {
+            document.documentElement.dataset.theme = saved;
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.dataset.theme = 'dark';
+          }
+        } catch (_) {}
+      })();
+    </script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header class="nav">
-    <a class="nav-logo" href="/" aria-label="games · jdilig.me">
-      <img class="nav-logo-img" src="/logo.png" alt="" aria-hidden="true" />
-      <span class="nav-logo-mark">jdilig<span class="dot">.</span>me</span><span class="nav-logo-sep">/</span><span class="nav-logo-section">games</span>
-    </a>
-
-    <nav class="nav-links" aria-label="Site sections">
-      <a class="nav-link" href="https://jdilig.me" rel="noopener">
-        <span>jdilig.me</span>
-        <svg class="nav-link-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
-      </a>
-    </nav>
-
-    <div class="nav-right">
-      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">
-        <svg class="icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/></svg>
-        <svg class="icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/></svg>
-      </button>
-    </div>
-  </header>
-
-  <main class="page">
-    <section class="hero">
-      <span class="eyebrow">§ AI Browser Games · 2026</span>
-      <h1 class="hero-h1">
-        I build games<span class="accent-dot">.</span>
-        Now I let <span class="serif">AI</span> build them too<span class="accent-dot">.</span>
-      </h1>
-      <p class="lead">
-        A growing library of browser games and demos generated end-to-end by AI agents. Code by <a href="https://claude.com/claude-code" rel="noopener">Claude Code</a>, art by <a href="https://pixellab.ai" rel="noopener">PixelLab</a>, audio synthesized in code. Static HTML/CSS/JS — no build step.
-      </p>
-    </section>
-
-    <section class="games-section">
-      <header class="section-header">
-        <h2>All games</h2>
-        <span class="section-count" id="game-count" aria-hidden="true"></span>
-      </header>
-      <ul class="game-list" id="game-list">
-        <li class="empty">No games yet — add the first one in <code>games/</code>.</li>
-      </ul>
-    </section>
-  </main>
-
-  <footer class="page-footer">
-    <div class="footer-row">
-      <p>
-        © 2026 John Dilig. Code <a href="LICENSE">MIT</a>. Original assets <a href="LICENSE-ASSETS">CC BY 4.0</a>. AI-generated pixel art governed by <a href="https://pixellab.ai/termsofservice" rel="noopener">PixelLab's ToS</a>.
-      </p>
-      <p>
-        Full <a href="credits.html">credits &amp; licensing</a> · <a href="https://github.com/balbonits/ai-browser-game-demos" rel="noopener">source on GitHub</a> · <a href="https://jdilig.me" rel="noopener">jdilig.me</a>
-      </p>
-    </div>
-  </footer>
-
-  <script src="games.js"></script>
-  <script>
-    // Theme toggle
-    (function () {
-      var btn = document.getElementById('theme-toggle');
-      if (!btn) return;
-      btn.addEventListener('click', function () {
-        var cur = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
-        var next = cur === 'dark' ? 'light' : 'dark';
-        document.documentElement.dataset.theme = next;
-        try { localStorage.setItem('jdilig-theme', next); } catch (_) {}
-      });
-    })();
-
-    // Update the small "N games · 2026" pill once games.js has rendered.
-    (function () {
-      var count = (typeof GAMES !== 'undefined' && GAMES.length) || 0;
-      var el = document.getElementById('game-count');
-      if (el && count > 0) {
-        el.textContent = count + ' game' + (count === 1 ? '' : 's') + ' · 2026';
-      }
-    })();
-  </script>
-</body>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
