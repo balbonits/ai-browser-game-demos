@@ -232,12 +232,17 @@ export function drawHudStrip(ctx, {
   ctx.shadowBlur = 6;
   ctx.fillText(`¢ ${money}`, 56, cy);
 
-  // Wave readout (right, magenta).
+  // Wave readout (right, magenta). In endless mode (wave > total) the
+  // "/total" portion is replaced with an infinity glyph so the player
+  // knows they've crossed into score-attack.
   ctx.textAlign = 'right';
   ctx.fillStyle = COLORS.warn;
   ctx.shadowColor = COLORS.warn;
   ctx.shadowBlur = 6;
-  ctx.fillText(`WAVE ${String(wave).padStart(2, '0')}/${total}`, W - 36, cy);
+  const waveLabel = wave > total
+    ? `WAVE ${String(wave).padStart(2, '0')} ∞`
+    : `WAVE ${String(wave).padStart(2, '0')}/${total}`;
+  ctx.fillText(waveLabel, W - 36, cy);
   ctx.shadowBlur = 0;
 
   // Status (center) — tells the player what's going on.

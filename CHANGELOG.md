@@ -40,6 +40,9 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); dates ar
 - Milestone chime every 100m.
 - Regenerated the `falling-back-death` animation (user re-ran on PixelLab side).
 
+### Neon Tower Defense (v0.2)
+- **Endless mode.** After wave 12 the campaign no longer ends — the wave counter keeps climbing into score-attack territory. The 12 wave templates cycle (`idx → WAVES[(idx-1) % 12]`) and a per-wave multiplier scales enemy HP `+30%`, speed `+4%` (capped at `1.40×`), spawn count `+8%`, and kill reward `+25%`. Reward scales close to the HP curve so the player stays solvent through upgrades. Defeat is the only run-ender now. HUD label flips from `NN/12` to `NN ∞`, `best: wave NN ∞` shows on the intro, and a `SURVIVED N WAVES` milestone fires every 5 endless waves.
+
 ### Neon Tower Defense (v0.1)
 - New game added: shape-based tower defense in a neon CRT aesthetic. **No PixelLab, no audio files.** Every visual is a geometric primitive drawn from `render.js`; every sound is synthesized at runtime in `audio.js`. Intended as a counterpoint to Running Man's pixel-art pipeline — the same engine philosophy (vanilla JS + Canvas2D + Web Audio), but a completely different aesthetic stack.
 - 12 hand-tuned waves with 3 boss waves (4, 8, 12). 3 tower types × 3 upgrade levels each (Bolt/Pulse/Spike triangle/square/diamond). 4 enemy shapes (square / tri / hex / diamond-boss). Build / upgrade / sell economy with a 70% refund. Mechanics include AoE splash, pierce, and slow.

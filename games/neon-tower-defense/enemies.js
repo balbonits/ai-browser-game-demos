@@ -13,25 +13,33 @@ export const enemies = [];
 
 let _nextId = 1;
 
-export function spawnEnemy(kind) {
+// `mul` lets the wave runner scale per-instance stats for endless mode:
+//   { hp, speed, valueMul } — defaults to 1.0× on each.
+export function spawnEnemy(kind, mul = null) {
   const def = ENEMIES[kind];
   if (!def) return null;
+  const hpMul = (mul && mul.hp) || 1;
+  const speedMul = (mul && mul.speed) || 1;
+  const valueMul = (mul && mul.valueMul) || 1;
+  const hp = Math.max(1, Math.round(def.hp * hpMul));
   const e = {
     id: _nextId++,
     kind,
     def,
     progress: 0,
-    hp: def.hp,
-    maxHp: def.hp,
-    speed: def.speed,
-    slowT: 0,         // remaining slow duration
-    slowFrac: 0,      // current slow fraction (0..1)
+    hp,
+    maxHp: hp,
+    speed: def.speed * speedMul,    // baked into the entity so endless scaling
+                                    // applies to path advancement (slow-effect
+                                    // multiplier still divides this).
+    value: Math.round(def.value * valueMul),
+    slowT: 0,
+    slowFrac: 0,
     x: 0, y: 0, a: 0,
     dead: false,
-    leaked: false,    // true if it walked off the end
-    spinT: 0,         // for body rotation animation
+    leaked: false,
+    spinT: 0,
   };
-  // Initialize position at the start of the path.
   const p = pointAt(0);
   e.x = p.x; e.y = p.y; e.a = p.a;
   enemies.push(e);
@@ -62,7 +70,7 @@ export function updateEnemies(dt, onLeak, onKill) {
       }
     }
 
-    const speed = e.def.speed * (1 - e.slowFrac);
+    const speed = e.speed * (1 - e.slowFrac);
     e.progress += speed * dt;
     e.spinT += dt;
 

@@ -121,6 +121,21 @@ Boss waves: 4, 8, 12.
 
 Inter-wave cooldown is 6 seconds; pressing `Space` skips the rest of the cooldown for a +5¢ bonus.
 
+### Endless mode
+
+After clearing wave 12 the run does **not** end — it transitions into endless mode and the wave counter keeps climbing (`WAVE 13 ∞`, `WAVE 14 ∞`, …). The 12 wave templates cycle (`idx → WAVES[(idx-1) % 12]`) so the player keeps seeing varied compositions, and a per-wave multiplier tightens the screws:
+
+| Scalar | Per wave past 12 | Cap |
+| --- | --- | --- |
+| Enemy HP | `+30%` | none |
+| Enemy speed | `+4%` | `1.40×` |
+| Spawn count per segment | `+8%` | none |
+| Kill reward | `+25%` | none |
+
+Reward scales close to the HP curve so the player stays solvent for upgrades, but eventually the HP/count combo overruns any tower setup — endless is a score-attack (highest wave reached) rather than a winnable mode.
+
+Boss waves still hit on every 4th index (16, 20, 24, …) as the cycle repeats. Every 5 cleared waves past wave 12 fires a `SURVIVED N WAVES` milestone banner + victory cue.
+
 ### Economy
 
 - Starting credits: 120.
@@ -146,3 +161,4 @@ Inter-wave cooldown is 6 seconds; pressing `Space` skips the rest of the cooldow
 ## Changelog
 
 - `2026-04-25` — v0.1: initial playable build. Vanilla JS + Canvas2D, neon shape-based art (no sprites), Web Audio synth (no files), 12 hand-tuned waves with 3 boss waves, 3 tower types with 3 levels each, 4 enemy types, build/upgrade/sell economy, slow + AoE + pierce mechanics.
+- `2026-04-25` — v0.2: endless mode. After wave 12 the campaign dissolves into a score-attack: the 12 wave templates cycle and a per-wave multiplier scales HP / speed / spawn count / kill reward. The win screen is gone — only defeat ends a run. Wave label switches from `NN/12` to `NN ∞` and `localStorage[neon-td:best]` keeps tracking the highest wave reached.

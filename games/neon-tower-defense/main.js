@@ -112,7 +112,6 @@ function setHint(text) {
 
 function tryStartNextWave({ skipped = false } = {}) {
   if (game.state !== STATE.READY) return false;
-  if (game.wave >= TOTAL_WAVES) return false;
   const nextWave = game.wave + 1;
   if (!startWave(nextWave)) return false;
   game.state = STATE.RUNNING;
@@ -122,29 +121,43 @@ function tryStartNextWave({ skipped = false } = {}) {
     game.money += 5;
   }
   audio.waveStart();
-  setBanner(nextWave % 4 === 0 ? `BOSS WAVE ${nextWave}` : `WAVE ${nextWave}`, 1.4);
+  // Boss waves: every 4th wave inside the 12-wave loop. In endless mode,
+  // the templates cycle, so wave 16/20/24/... are also bosses.
+  const isBoss = nextWave % 4 === 0;
+  const label = nextWave > TOTAL_WAVES
+    ? (isBoss ? `BOSS · WAVE ${nextWave} ∞` : `WAVE ${nextWave} ∞`)
+    : (isBoss ? `BOSS WAVE ${nextWave}` : `WAVE ${nextWave}`);
+  setBanner(label, 1.4);
   updateHud();
   return true;
 }
 
 function onWaveCleared() {
   game.wave++;
-  // Reward + cooldown.
+  // Reward + cooldown. Bonus scales with wave number so the player can
+  // keep affording upgrades into endless mode.
   const bonus = 20 + game.wave * 4;
   game.money += bonus;
   audio.waveClear();
-  if (game.wave >= TOTAL_WAVES) {
-    game.state = STATE.WON;
-    audio.stopMusic();
-    audio.victory();
-    persistBest();
-    setHint('victory! click to play again');
-    return;
-  }
   game.state = STATE.READY;
   game.cooldown = WAVE_COOLDOWN;
-  setBanner(`WAVE CLEAR · +¢${bonus}`, 1.6);
-  setHint('next wave incoming · SPACE to start');
+
+  if (game.wave === TOTAL_WAVES) {
+    // Crossed the threshold into endless mode — celebrate the milestone
+    // but don't transition to a "WON" state. Endless mode keeps spawning
+    // until lives run out.
+    audio.victory();
+    setBanner(`GRID SECURED · ENDLESS MODE`, 2.6);
+    setHint('endless mode begins · how far can you push?');
+  } else if (game.wave > TOTAL_WAVES && game.wave % 5 === 0) {
+    // Periodic milestone in endless to give scoring a sense of weight.
+    audio.victory();
+    setBanner(`SURVIVED ${game.wave} WAVES`, 2.0);
+    setHint('next wave incoming · SPACE to start');
+  } else {
+    setBanner(`WAVE CLEAR · +¢${bonus}`, 1.6);
+    setHint('next wave incoming · SPACE to start');
+  }
   persistBest();
   updateHud();
 }
@@ -406,7 +419,8 @@ function onEnemyLeaked(e) {
 }
 
 function onEnemyKilled(e) {
-  game.money += e.def.value;
+  // e.value already includes the endless-mode value multiplier.
+  game.money += e.value ?? e.def.value;
   if (e.kind === 'boss') audio.bossKill();
   else audio.enemyKill();
   updateHud();
@@ -492,11 +506,14 @@ function render() {
 
   // State overlays
   if (game.state === STATE.INTRO) {
+    const bestLabel = game.best > TOTAL_WAVES
+      ? `best: wave ${game.best} ∞`
+      : `best: wave ${game.best}`;
     drawCenteredOverlay(ctx, {
       title: 'NEON TOWER DEFENSE',
       subtitle: [
-        '12 waves · place towers · don\'t let shapes leak',
-        game.best > 0 ? `best: wave ${game.best}` : 'click or press SPACE to begin',
+        '12 waves + endless · place towers · don\'t let shapes leak',
+        game.best > 0 ? bestLabel : 'click or press SPACE to begin',
       ],
       accent: COLORS.path,
     });
@@ -506,17 +523,15 @@ function render() {
       subtitle: 'P or Esc to resume',
       accent: COLORS.hudDim,
     });
-  } else if (game.state === STATE.WON) {
-    drawCenteredOverlay(ctx, {
-      title: 'GRID SECURED',
-      subtitle: [`survived all ${TOTAL_WAVES} waves`, 'click or press SPACE to play again'],
-      accent: COLORS.ok,
-    });
   } else if (game.state === STATE.LOST) {
+    const reached = game.wave + 1;
+    const reachedLabel = reached > TOTAL_WAVES
+      ? `reached wave ${reached} ∞`
+      : `reached wave ${reached}/${TOTAL_WAVES}`;
     drawCenteredOverlay(ctx, {
       title: 'GRID OVERRUN',
       subtitle: [
-        `reached wave ${game.wave + 1}/${TOTAL_WAVES}`,
+        reachedLabel,
         game.wave >= game.best && game.best > 0 ? 'new best!' : '',
         'click or press SPACE to retry',
       ].filter(Boolean),
