@@ -15,6 +15,11 @@ const GAMES = [
     title: "Block Arena",
     description: "First-person shooter with a polygonal gun and 3D block enemies. Three.js, no build step.",
   },
+  {
+    slug: "maze-runner",
+    title: "Maze Runner",
+    description: "Procedurally generated mazes seeded by a string or number. Race the clock, collect gems, escape the grid. All visuals and audio synthesized in code.",
+  },
 ];
 
 const list = document.getElementById("game-list");

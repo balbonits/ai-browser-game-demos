@@ -60,6 +60,19 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); dates ar
 - Persists best wave + mute preference in `localStorage` (`neon-td:best` / `neon-td:muted`).
 - Registered in `games.js`, doc at [`docs/games/neon-tower-defense.md`](docs/games/neon-tower-defense.md).
 
+### Maze Runner (v0.1)
+- New game added: top-down procedural maze runner. **No PixelLab, no audio files.** Every visual is drawn with canvas primitives; every sound is synthesized at runtime via Web Audio.
+- Maze generation uses the **recursive backtracker** (depth-first search) algorithm seeded by a 32-bit Mulberry32 PRNG. Same seed always produces the same maze. Seeds can be any string or integer.
+- Three difficulty sizes: Small (11×9), Medium (19×13), Large (29×19).
+- Fog of war: only cells within 4 Manhattan-distance of the player are lit; previously seen cells remain dim.
+- Collectible gems placed in dead-end cells; gem count shown in HUD.
+- Timer starts on first move; best time per seed+difficulty persisted in `localStorage` (`maze-runner:best:<diff>:<seed>`).
+- Player avatar: bright cyan circle with glow. Trail of recent visited cells fades behind the player.
+- Minimap in bottom-right corner shows the full explored maze at 3 px/cell scale.
+- Custom seed entry via `E` key (canvas-drawn prompt overlay). Seed shown in HUD for sharing.
+- Web Audio SFX: footstep tick, wall-bump dissonance, gem pickup chirp, start two-note cue, win arpeggio + pad.
+- Registered in `games.js`, doc at [`docs/games/maze-runner.md`](docs/games/maze-runner.md).
+
 ### Running Man (v0.2)
 - **Art swap.** `cactus` → felled `log`, `crate` → road `crack`, rock regenerated without the bag. Mid-distance blue mountains replaced with a dense pine `forest.png` banner. Three cloud variants (`cloud.png`, `cloud-large.png`, `cloud-small.png`) clustered into bunches with sky gaps in a 960 px banner; horizontal flips give extra silhouette variety.
 - **Layered horizon.** Far mountains and forest both tile with 30% overlap so peaks and trees blend seam-free. Cloud band shifted 20 px down. Far mountains anchored 31 px below the natural horizon to free up sky.
