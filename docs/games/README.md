@@ -25,3 +25,4 @@ Game docs are listed here in chronological order of when they were started. Upda
 
 - [`running-man.md`](running-man.md) — side-scrolling auto-runner (first game, vanilla JS).
 - [`neon-tower-defense.md`](neon-tower-defense.md) — shape-based tower defense, neon CRT aesthetic, 100% code-drawn visuals + synthesized audio (no PixelLab, no audio files).
+- [`maze-runner.md`](maze-runner.md) — top-down procedural maze runner, recursive-backtracker DFS, seeded RNG, fog of war, gem collectibles, minimap (no PixelLab, no audio files).

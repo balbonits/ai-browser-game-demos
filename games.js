@@ -10,6 +10,11 @@ const GAMES = [
     title: "Neon Tower Defense",
     description: "Shape-based tower defense with neon aesthetic. All visuals and audio synthesized in code — no sprites, no audio files.",
   },
+  {
+    slug: "maze-runner",
+    title: "Maze Runner",
+    description: "Procedurally generated mazes seeded by a string or number. Race the clock, collect gems, escape the grid. All visuals and audio synthesized in code.",
+  },
 ];
 
 const list = document.getElementById("game-list");
