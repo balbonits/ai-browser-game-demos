@@ -1,0 +1,12 @@
+{
+  "name": "ai-browser-game-demos",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A collection of browser games built entirely by AI (Claude Code, PixelLab.ai, etc.). Static site — no build step.",
+  "homepage": "https://jdilig.me",
+  "author": "John Dilig",
+  "license": "MIT",
+  "scripts": {
+    "dev": "python3 -m http.server 0 --bind 127.0.0.1"
+  }
+}

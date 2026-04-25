@@ -1,0 +1,13 @@
+.DS_Store
+node_modules/
+*.log
+.vscode/
+.idea/
+.vercel/
+
+# Claude Code local state — agent definitions are checked in, but
+# per-machine settings and runtime artifacts stay local.
+.claude/settings.json
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/.cache/

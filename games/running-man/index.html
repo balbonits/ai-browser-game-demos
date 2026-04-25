@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Running Man · AI Browser Game Demos</title>
+  <meta name="description" content="Running Man — a side-scrolling auto-runner built entirely by AI. Jump to survive." />
+  <meta name="copyright" content="© 2026 John Dilig" />
+  <meta name="author" content="John Dilig" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">← all games</a>
+
+  <div class="stage">
+    <div class="frame">
+      <canvas id="game" width="480" height="270"></canvas>
+      <div class="hud-top">
+        <div class="score" id="score">0m</div>
+        <button
+          class="sound-toggle"
+          id="sound-toggle"
+          type="button"
+          aria-label="Mute sound"
+          title="Mute / unmute (M)"
+        >🔊</button>
+      </div>
+      <div class="hud-bottom">
+        <div class="hint" id="hint">press SPACE to run</div>
+      </div>
+    </div>
+    <div class="meta">
+      <strong>Running Man</strong> — auto-runner. Jump to survive.
+    </div>
+    <div class="legal-strip">
+      © 2026 John Dilig ·
+      code <a href="../../LICENSE">MIT</a> ·
+      pixel art via
+      <a href="https://pixellab.ai" rel="noopener">PixelLab.ai</a>
+      (<a href="https://pixellab.ai/termsofservice" rel="noopener">ToS</a>) ·
+      <a href="../../credits.html">credits</a>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

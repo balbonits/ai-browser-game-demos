@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Credits &amp; Licensing · AI Browser Game Demos</title>
+  <meta name="description" content="Credits, attributions, and licensing for the AI-built games collection." />
+  <meta name="copyright" content="© 2026 John Dilig" />
+  <meta name="author" content="John Dilig" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Credits &amp; Licensing</h1>
+    <p class="tagline">How the pieces are built, who made them, and what you can do with them.</p>
+  </header>
+
+  <main class="legal">
+    <section>
+      <h2>Copyright</h2>
+      <p>
+        Unless otherwise noted, all original material in this project is
+        <strong>© 2026 John Dilig</strong>. This includes the site design, game code,
+        written documentation, and any original (non-AI-generated) creative assets.
+      </p>
+    </section>
+
+    <section>
+      <h2>Source code — MIT License</h2>
+      <p>
+        All source code (HTML, CSS, JavaScript, configuration, and documentation
+        files) is released under the
+        <a href="LICENSE">MIT License</a>. You are free to use, copy, modify, merge,
+        publish, distribute, sublicense, and sell copies of the code, subject to the
+        conditions in that license. The code is provided “as is,” without warranty
+        of any kind.
+      </p>
+    </section>
+
+    <section>
+      <h2>Original creative assets — CC BY 4.0</h2>
+      <p>
+        Original creative assets authored specifically for this project (images,
+        sprites, audio, and similar non-code files) are licensed under the
+        <a href="LICENSE-ASSETS">Creative Commons Attribution 4.0 International</a>
+        license. You may share and adapt them — including commercially — as long as
+        you provide appropriate attribution and indicate any changes.
+      </p>
+      <p class="muted">
+        Suggested attribution:
+        <em>“Artwork by John Dilig (ai-browser-game-demos), CC BY 4.0”</em>.
+      </p>
+    </section>
+
+    <section>
+      <h2>Third-party AI-generated assets</h2>
+      <p>
+        Pixel art in this project — characters, animations, obstacle sprites, and
+        backdrop layers — is generated using
+        <a href="https://pixellab.ai" rel="noopener">PixelLab.ai</a>. Those assets
+        are <strong>governed by PixelLab’s Terms of Service</strong> and are
+        <strong>not</strong> relicensed by this project. If you intend to reuse a
+        specific PixelLab-generated asset from this repository, you are responsible
+        for complying with PixelLab’s terms.
+      </p>
+      <p>
+        See: <a href="https://pixellab.ai/termsofservice" rel="noopener">
+          https://pixellab.ai/termsofservice
+        </a>
+      </p>
+    </section>
+
+    <section>
+      <h2>Tools used</h2>
+      <ul>
+        <li>
+          <strong><a href="https://claude.com/claude-code" rel="noopener">Claude Code</a></strong>
+          — Anthropic’s Claude model, used for generating and editing game code,
+          documentation, and configuration.
+        </li>
+        <li>
+          <strong><a href="https://pixellab.ai" rel="noopener">PixelLab.ai</a></strong>
+          — pixel art generation (characters, directional rotations, template
+          animations, and map objects).
+        </li>
+        <li>
+          <strong>Web Audio API</strong> — browser-native, used for all SFX and
+          music. No audio files are shipped.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Per-game credits</h2>
+      <h3>Running Man</h3>
+      <ul>
+        <li>
+          <strong>Character:</strong> PixelLab “Human Base” mannequin
+          (<code>1b27dde3-809d-47ca-8277-68bc6c5565b7</code>), with template
+          animations <code>running-8-frames</code>, <code>running-jump</code>, and
+          <code>falling-back-death</code> (east direction).
+        </li>
+        <li>
+          <strong>Obstacles:</strong> three PixelLab map-objects — rock, cactus, crate.
+        </li>
+        <li>
+          <strong>Backdrops:</strong> two PixelLab map-object mountain silhouettes
+          (far + mid) and a cloud sprite.
+        </li>
+        <li>
+          <strong>Audio:</strong> synthesized at runtime via the Web Audio API — no
+          external audio files.
+        </li>
+        <li>
+          <strong>Code:</strong> vanilla JS + Canvas2D, produced via Claude Code.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Reuse checklist</h2>
+      <p>If you want to reuse something from this project:</p>
+      <ul>
+        <li>Code — MIT. Use freely; attribution appreciated but not required.</li>
+        <li>Original creative assets — CC BY 4.0. Attribute as noted above.</li>
+        <li>
+          PixelLab-generated pixel art — verify against
+          <a href="https://pixellab.ai/termsofservice" rel="noopener">PixelLab’s ToS</a>.
+          This project does not, and cannot, grant rights beyond what PixelLab grants.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Contact</h2>
+      <p>
+        For licensing questions, takedown requests, or attribution issues, please
+        reach out via <a href="https://jdilig.me" rel="noopener">jdilig.me</a>.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      © 2026 John Dilig ·
+      <a href="index.html">all games</a> ·
+      <a href="https://jdilig.me" rel="noopener">jdilig.me</a>
+    </p>
+  </footer>
+</body>
+</html>

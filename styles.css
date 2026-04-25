@@ -1,0 +1,125 @@
+:root {
+  --bg: #0f1116;
+  --fg: #e6e6e6;
+  --muted: #8a8f98;
+  --accent: #7aa2f7;
+  --card: #181b22;
+  --border: #262b34;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+header, main, footer {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 2rem;
+}
+
+.tagline {
+  margin: 0;
+  color: var(--muted);
+}
+
+.game-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.game-list li {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  transition: border-color 0.15s ease;
+}
+
+.game-list li:hover {
+  border-color: var(--accent);
+}
+
+.game-list li.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--muted);
+  background: transparent;
+  border: 1px dashed var(--border);
+}
+
+.game-list a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.game-list a:hover { text-decoration: underline; }
+
+.game-list .description {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+code {
+  background: var(--card);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+footer {
+  color: var(--muted);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--border);
+  margin-top: 2rem;
+}
+
+footer a { color: var(--accent); }
+footer p { margin: 0.35rem 0; }
+
+/* credits page */
+
+.legal {
+  max-width: 780px;
+}
+.legal section {
+  padding: 0.5rem 0 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.legal section:last-child { border-bottom: 0; }
+.legal h2 {
+  font-size: 1.25rem;
+  margin: 1.25rem 0 0.5rem;
+}
+.legal h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.25rem;
+  color: var(--fg);
+}
+.legal p { margin: 0.5rem 0; }
+.legal ul { margin: 0.5rem 0 0.75rem 1.25rem; padding: 0; }
+.legal li { margin: 0.25rem 0; }
+.legal a { color: var(--accent); }
+.legal .muted { color: var(--muted); font-size: 0.9rem; }
+.legal code {
+  font-size: 0.85em;
+  word-break: break-all;
+}
