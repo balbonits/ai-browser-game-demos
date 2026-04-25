@@ -1,5 +1,7 @@
 # AI Browser Game Demos
 
+**Live site: <https://ai-browser-game-demos.vercel.app>**
+
 A personal collection of browser games and game demos, **built entirely by AI** under my direction.
 
 The goal of this repo is to explore what modern AI tooling can produce end-to-end — code, art, audio, design — with me acting as the director rather than the implementer.

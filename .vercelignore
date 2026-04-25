@@ -1,0 +1,23 @@
+# Files that shouldn't be uploaded to Vercel.
+# Vercel does NOT auto-respect .gitignore — this file mirrors what we
+# don't want shipped (local Claude state, agent worktrees, OS junk).
+
+.git
+.gitignore
+.claude
+.vercel
+.DS_Store
+node_modules
+*.log
+
+# Documentation isn't needed at runtime — the docs folder is a github-only artifact.
+docs
+
+# Repo metadata that doesn't need to ship as part of the static site.
+README.md
+AGENTS.md
+CLAUDE.md
+CHANGELOG.md
+
+# License files DO ship — they're linked from the legal-strip footer in each game.
+# (LICENSE, LICENSE-ASSETS — explicitly NOT excluded here.)

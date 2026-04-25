@@ -1,38 +1,66 @@
 # Deploy
 
-This repo deploys as a static site to **Vercel**, intended as a subsite of `jdilig.me`.
+This repo is deployed as a static site to **Vercel**.
+
+**Live URL:** <https://ai-browser-game-demos.vercel.app>
+
+The Vercel project (`ai-browser-game-demos`) is connected to the GitHub repo, so every push to `main` auto-deploys to production. There's no build step — Vercel just serves the repo's files as static assets.
 
 ## Files involved
 
 - [`vercel.json`](../vercel.json) — clean URLs (no `.html` in the path), long-lived cache on `/games/<slug>/assets/*`, short cache on JS/CSS.
+- [`.vercelignore`](../.vercelignore) — excludes local Claude state, the `.git` folder, the `docs/` folder, and root-level `.md` files (everything that's only meaningful inside the repo, not at runtime).
 - [`package.json`](../package.json) — holds the `dev` script only. **No dependencies, no build step.** Vercel treats this as a plain static project.
 
-## Deploying the first time
+## How it was set up
 
-1. Log in to Vercel (https://vercel.com/dashboard) with the same account that hosts `jdilig.me`.
-2. Click **Add New → Project** and import this repository (connect via GitHub if it's not already).
-3. When Vercel asks for framework preset, pick **Other** (or let it auto-detect — with no build script it'll just serve files).
-4. Leave **Build Command** empty, **Output Directory** empty (defaults to repo root), **Install Command** empty.
-5. Deploy.
+1. **Initial deploy** (one-time, already done):
+   ```sh
+   vercel deploy --prod --yes
+   ```
+   That created the project under `john-diligs-projects` scope and produced the `*.vercel.app` URL above.
 
-After the first deploy, Vercel will give you a `<project>.vercel.app` URL.
+2. **GitHub integration** (one-time, already done):
+   ```sh
+   vercel git connect
+   ```
+   That linked the GitHub repo so subsequent pushes auto-deploy.
 
-## Attaching it as a subsite of jdilig.me
+3. **Subsequent updates**: just `git push origin main`. Vercel picks it up.
+
+## Manual redeploy
+
+If you ever need to deploy outside of git:
+
+```sh
+vercel deploy --prod
+```
+
+For a preview (non-production) deploy:
+
+```sh
+vercel deploy
+```
+
+## Attaching it as a subsite of jdilig.me (optional)
 
 Two options, pick one:
 
 ### Option A — subdomain (`games.jdilig.me`) **recommended**
 
-1. In the new Vercel project's **Settings → Domains**, add `games.jdilig.me`.
+1. In the Vercel project's **Settings → Domains**, add `games.jdilig.me`. Or via CLI:
+   ```sh
+   vercel domains add games.jdilig.me ai-browser-game-demos
+   ```
 2. Vercel will show you the DNS record to add (usually a `CNAME` pointing at `cname.vercel-dns.com`).
-3. Add that record wherever `jdilig.me`'s DNS lives.
+3. Add that record at the registrar where `jdilig.me`'s DNS lives.
 4. Wait a minute, verify, done.
 
 Pros: clean separation, independent project in Vercel, can deploy independently of the main portfolio.
 
 ### Option B — subpath (`jdilig.me/games`)
 
-This requires editing the main `jdilig.me` project (not this repo). Add a rewrite in that project's `vercel.json` pointing `/games/:path*` to this project. More complicated; only worth it if you really want everything under one origin.
+This requires editing the main `jdilig.me` project (`jdilig-me-v3`). Add a rewrite in that project's `vercel.json` pointing `/games/:path*` to this project. More complicated and couples the deploys; only worth it if you really want everything under one origin.
 
 ## Local testing before deploy
 
