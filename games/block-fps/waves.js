@@ -15,6 +15,9 @@ const wave = {
   template: null,
   mul: { hp: 1, count: 1 },
   finishedSpawning: false,
+  cleared: false,         // one-shot: set true after main.js consumes the
+                          // wave-cleared event, prevents the rAF loop from
+                          // re-firing it every frame during the cooldown.
 };
 
 export function startWave(idx) {
@@ -35,6 +38,7 @@ export function startWave(idx) {
   wave.budget = budget;
   wave.spawnTimer = 0.5; // brief delay before first spawn
   wave.finishedSpawning = false;
+  wave.cleared = false;
   return true;
 }
 
@@ -46,11 +50,18 @@ export function resetWaves() {
   wave.budget = 0;
   wave.spawnTimer = 0;
   wave.finishedSpawning = false;
+  wave.cleared = false;
   wave.mul = { hp: 1, count: 1 };
 }
 
 export function isWaveActive() { return wave.active; }
 export function isWaveSpawningDone() { return wave.finishedSpawning; }
+export function isWaveCleared() { return wave.cleared; }
+
+// Mark the cleared event consumed. main.js calls this exactly once per
+// wave, the same frame it bumps `game.wave` and starts the cooldown.
+export function markWaveCleared() { wave.cleared = true; }
+
 export function currentWaveIndex() { return wave.index; }
 
 export function updateWaves(dt) {

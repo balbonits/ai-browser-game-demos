@@ -28,6 +28,7 @@ import {
 } from './enemies.js';
 import {
   startWave, resetWaves, updateWaves, isWaveActive, isWaveSpawningDone,
+  isWaveCleared, markWaveCleared,
 } from './waves.js';
 
 // --- DOM handles ---
@@ -386,8 +387,18 @@ function update(dt) {
   // Reap dead enemies (their score was already credited on the fatal hit).
   reapDead();
 
-  // Wave complete?
-  if (isWaveSpawningDone() && aliveCount() === 0 && !isWaveActive()) {
+  // Wave complete? Guard with isWaveCleared() so we only fire once per
+  // wave — without the guard, the conditions stay true throughout the
+  // inter-wave cooldown and onWaveCleared was firing every frame
+  // (rapidly inflating game.wave + score, eventually multiplying enemy
+  // HP via endless-mode scaling into impossible territory).
+  if (
+    isWaveSpawningDone() &&
+    aliveCount() === 0 &&
+    !isWaveActive() &&
+    !isWaveCleared()
+  ) {
+    markWaveCleared();
     onWaveCleared();
   }
 
