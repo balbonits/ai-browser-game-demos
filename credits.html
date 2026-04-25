@@ -7,6 +7,8 @@
   <meta name="description" content="Credits, attributions, and licensing for the AI-built games collection." />
   <meta name="copyright" content="© 2026 John Dilig" />
   <meta name="author" content="John Dilig" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -87,11 +89,25 @@
           <strong>Web Audio API</strong> — browser-native, used for all SFX and
           music. No audio files are shipped.
         </li>
+        <li>
+          <strong><a href="https://threejs.org" rel="noopener">Three.js</a></strong>
+          (MIT) — loaded via the
+          <a href="https://esm.sh" rel="noopener">esm.sh</a> CDN for the 3D game
+          (<em>Block Arena</em>). Not bundled, not redistributed.
+        </li>
+        <li>
+          <strong>Fonts</strong> — <a href="https://vercel.com/font" rel="noopener">Geist</a>,
+          <a href="https://fonts.google.com/specimen/Instrument+Serif" rel="noopener">Instrument Serif</a>,
+          and <a href="https://www.jetbrains.com/lp/mono/" rel="noopener">JetBrains Mono</a>,
+          loaded via Google Fonts. All three are licensed under the
+          <a href="https://openfontlicense.org/" rel="noopener">SIL Open Font License</a>.
+        </li>
       </ul>
     </section>
 
     <section>
       <h2>Per-game credits</h2>
+
       <h3>Running Man</h3>
       <ul>
         <li>
@@ -101,15 +117,73 @@
           <code>falling-back-death</code> (east direction).
         </li>
         <li>
-          <strong>Obstacles:</strong> three PixelLab map-objects — rock, cactus, crate.
+          <strong>Obstacles:</strong> three PixelLab map-objects — rock, felled
+          log, and cracked-road sprite.
         </li>
         <li>
-          <strong>Backdrops:</strong> two PixelLab map-object mountain silhouettes
-          (far + mid) and a cloud sprite.
+          <strong>Backdrops:</strong> PixelLab map-object far-mountain silhouette,
+          mid-distance pine forest banner, and three cloud variants.
         </li>
         <li>
           <strong>Audio:</strong> synthesized at runtime via the Web Audio API — no
           external audio files.
+        </li>
+        <li>
+          <strong>Code:</strong> vanilla JS + Canvas2D, produced via Claude Code.
+        </li>
+      </ul>
+
+      <h3>Neon Tower Defense</h3>
+      <ul>
+        <li>
+          <strong>Visuals:</strong> 100% code-drawn. Every tower, enemy,
+          projectile, and effect is a geometric primitive rendered in
+          <code>render.js</code>. <em>No PixelLab, no images, no third-party
+          art assets.</em>
+        </li>
+        <li>
+          <strong>Audio:</strong> synthesized at runtime via the Web Audio API.
+        </li>
+        <li>
+          <strong>Code:</strong> vanilla JS + Canvas2D, produced via Claude Code.
+        </li>
+      </ul>
+
+      <h3>Block Arena</h3>
+      <ul>
+        <li>
+          <strong>Visuals:</strong> 100% procedural geometry. Polygonal gun
+          viewmodel, block enemies, arena pillars — all built from
+          <code>BoxGeometry</code> + <code>EdgesGeometry</code> primitives. No
+          textures, no models, no third-party art assets.
+        </li>
+        <li>
+          <strong>Engine:</strong> <a href="https://threejs.org" rel="noopener">Three.js</a>
+          <code>0.170.0</code> (MIT) loaded at runtime from
+          <a href="https://esm.sh" rel="noopener">esm.sh</a>. Three.js is
+          <strong>not</strong> redistributed by this repo — it is fetched by the
+          browser from the CDN and remains under its upstream MIT license. See
+          <a href="https://github.com/mrdoob/three.js/blob/dev/LICENSE" rel="noopener">three.js LICENSE</a>.
+        </li>
+        <li>
+          <strong>Audio:</strong> synthesized at runtime via the Web Audio API.
+        </li>
+        <li>
+          <strong>Code:</strong> vanilla ES modules + Three.js, produced via
+          Claude Code.
+        </li>
+      </ul>
+
+      <h3>Maze Runner</h3>
+      <ul>
+        <li>
+          <strong>Visuals:</strong> 100% code-drawn canvas primitives. Maze
+          generated procedurally with the recursive-backtracker DFS algorithm
+          and a Mulberry32 PRNG seeded by the user-provided string or number.
+          <em>No PixelLab, no images, no third-party art assets.</em>
+        </li>
+        <li>
+          <strong>Audio:</strong> synthesized at runtime via the Web Audio API.
         </li>
         <li>
           <strong>Code:</strong> vanilla JS + Canvas2D, produced via Claude Code.
@@ -144,6 +218,7 @@
     <p>
       © 2026 John Dilig ·
       <a href="index.html">all games</a> ·
+      <a href="https://games.jdilig.me" rel="noopener">games.jdilig.me</a> ·
       <a href="https://jdilig.me" rel="noopener">jdilig.me</a>
     </p>
   </footer>

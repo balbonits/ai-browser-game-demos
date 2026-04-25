@@ -214,8 +214,8 @@ a:focus-visible,
 
 .nav-logo {
   display: inline-flex;
-  align-items: baseline;
-  gap: 2px;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-mono);
   font-size: 17px;
   font-weight: 600;
@@ -224,7 +224,17 @@ a:focus-visible,
   text-decoration: none;
 }
 .nav-logo:hover { color: var(--fg-strong); text-decoration: none; }
+.nav-logo:hover .nav-logo-img { transform: scale(1.05); }
 .nav-logo .dot { color: var(--accent); }
+.nav-logo-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 0 0 1px var(--border);
+  transition: transform 160ms ease;
+}
 .nav-logo-sep {
   color: var(--fg-faint);
   margin: 0 2px;

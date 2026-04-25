@@ -6,6 +6,20 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); dates ar
 
 ## [Unreleased]
 
+_(nothing yet)_
+
+## [0.1.0] - 2026-04-25
+
+First public release. Live at <https://games.jdilig.me>. Four playable games, full landing page, Vercel auto-deploy, public-facing legal posture.
+
+### Deployment & landing page
+- **Live on `games.jdilig.me`** as a Vercel-hosted subsite of `jdilig.me`. CNAME `games → cname.vercel-dns.com` configured at the registrar (GoDaddy); domain attached to the Vercel project `ai-browser-game-demos`. Auto-deploys on every push to `main`.
+- **Landing page redesigned to match the `jdilig.me` design system** (`~/Downloads/design_handoff_jdilig_site`). Shared design tokens (warm stone palette + `#ea580c` orange accent), Geist + Instrument Serif italic + JetBrains Mono fonts via Google Fonts, light/dark theme via `data-theme` on `<html>` with pre-paint bootstrap from `localStorage[jdilig-theme]`. Hero block with eyebrow (`§ AI Browser Games · 2026`), serif-italic accent, accent-orange period. Game cards: meta dot, hover lift + arrow translation, mono tag chips. Sticky nav with theme toggle.
+- **Favicon + header logo**: site favicon and header mark now use `/logo.png` (the user's GitHub avatar), matching `jdilig.me`. Wired into root `index.html`, `credits.html`, and all four `games/<slug>/index.html`.
+- `games.js` schema expanded: each game now has `year`, `kind` (genre label), `description`, and `tags` (mono chips) used to render the redesigned cards.
+- `.vercelignore` (excludes `.git`, `.claude`, `docs/`, root `.md` files — Vercel does not auto-respect `.gitignore`).
+- `vercel.json` with clean URLs (no `.html` in paths), long-lived cache on `/games/<slug>/assets/*`, short cache on JS/CSS.
+
 ### Added
 - Repo scaffolding: `README.md`, `CLAUDE.md`, `AGENTS.md`, `docs/`, `LICENSE` (MIT), `LICENSE-ASSETS` (CC BY 4.0) with a carve-out noting PixelLab-generated art remains governed by PixelLab's ToS.
 - `docs/adding-a-game.md`, `docs/pixellab.md`, `docs/conventions.md`, `docs/agents.md`, `docs/deploy.md`.

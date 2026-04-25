@@ -49,14 +49,17 @@ Use PixelLab MCP (see [`pixellab.md`](pixellab.md)). Save results in the appropr
 
 ## 4. Register the game
 
-Edit `games.js` at the repo root and add an entry:
+Edit `games.js` at the repo root and add an entry. The landing page reads `slug` / `title` / `year` / `kind` / `description` / `tags` and renders a card from them:
 
 ```js
 const GAMES = [
   {
     slug: "asteroid-sweep",
     title: "Asteroid Sweep",
-    description: "Clear the field. Don't get hit.",
+    year: "2026",                        // shown in the card meta line
+    kind: "Arcade shooter",              // short genre label, also in the meta line
+    description: "Clear the field. Don't get hit.",  // sentence case, ends in a period
+    tags: ["Vanilla JS", "Canvas2D", "Web Audio"],   // short tech chips
   },
 ];
 ```

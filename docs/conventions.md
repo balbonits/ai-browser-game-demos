@@ -73,9 +73,9 @@ The goal: only `main.js` knows about the full state machine. Every other module 
 
 ## Assets
 
-- Pixel art under `games/<slug>/assets/`.
+- Pixel art lives in **top-level category folders inside the game** (`games/<slug>/characters/`, `obstacles/`, `backdrops/`, etc.) — see "Folder layout" above. No shared `assets/` umbrella.
 - PNG for images unless there's a reason to use something else.
-- Audio (if any) under the same `assets/` folder.
+- **No audio files.** All audio in this repo is synthesized at runtime via the Web Audio API. See [`audio.md`](audio.md). If a game genuinely needs sample-based audio, raise it as a conversation first.
 
 ## Commit messages
 

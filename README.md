@@ -1,16 +1,28 @@
 # AI Browser Game Demos
 
-**Live site: <https://ai-browser-game-demos.vercel.app>**
+**Live site:** <https://games.jdilig.me> &nbsp;·&nbsp; mirror: <https://ai-browser-game-demos.vercel.app>
 
 A personal collection of browser games and game demos, **built entirely by AI** under my direction.
 
 The goal of this repo is to explore what modern AI tooling can produce end-to-end — code, art, audio, design — with me acting as the director rather than the implementer.
 
+## Games
+
+| Slug | Genre | Stack |
+| --- | --- | --- |
+| [`running-man`](games/running-man/) | Side-scrolling auto-runner | Vanilla JS · Canvas2D · PixelLab · Web Audio |
+| [`neon-tower-defense`](games/neon-tower-defense/) | Shape-based tower defense | Vanilla JS · Canvas2D · Web Audio |
+| [`block-fps`](games/block-fps/) | First-person shooter | Three.js (CDN) · WebGL · Web Audio |
+| [`maze-runner`](games/maze-runner/) | Procedurally generated maze | Vanilla JS · Canvas2D · Web Audio |
+
+Per-game notes (design, controls, asset inventory, changelog) live in [`docs/games/`](docs/games/).
+
 ## Tools used
 
 - **[Claude Code](https://claude.com/claude-code)** — writes and edits all game code (HTML / CSS / JS).
 - **[PixelLab.ai](https://pixellab.ai)** — generates pixel-art characters, animations, and tilesets via MCP.
-- Additional AI tools may be added over time (audio, music, level generation, etc.).
+- **[Three.js](https://threejs.org/)** — pulled in via [esm.sh](https://esm.sh) CDN for the 3D game (`block-fps`). No build step.
+- **Web Audio API** — every SFX and music track in this repo is synthesized at runtime. No audio files are committed.
 
 No hand-written game code. No hand-drawn art. If a human wrote it, it's an exception and it's noted in that game's folder.
 
@@ -41,7 +53,7 @@ You can also just open `index.html` directly in a browser for the landing page, 
 
 ## Deploying
 
-See [`docs/deploy.md`](docs/deploy.md). Deploys as a static site to Vercel, intended as a subsite of `jdilig.me`.
+See [`docs/deploy.md`](docs/deploy.md). Auto-deploys to Vercel on every push to `main`; live at <https://games.jdilig.me> (subdomain of [jdilig.me](https://jdilig.me)).
 
 ## Adding a game
 
@@ -56,6 +68,8 @@ See [`CHANGELOG.md`](CHANGELOG.md) for repo-wide changes. Per-game changelogs li
 - **Code** — [MIT License](LICENSE). Free to use, copy, modify, and showcase (including on your own portfolio). Attribution appreciated but not required.
 - **Original creative assets** — [CC BY 4.0](LICENSE-ASSETS). Free to use with attribution.
 - **Third-party AI-generated assets** (e.g. PixelLab-generated pixel art) — governed by the respective provider's Terms of Service. See [PixelLab's ToS](https://pixellab.ai/termsofservice). These are **not** relicensed by this repository.
+- **Third-party code dependencies** (e.g. Three.js loaded via CDN) — governed by their own licenses. Three.js is MIT.
+- **Fonts** (Geist, Instrument Serif, JetBrains Mono) — loaded via Google Fonts CDN; all SIL Open Font License.
 
 A full public-facing summary is at [`credits.html`](credits.html) (deployed alongside the site). Every HTML page also carries a `<meta name="copyright">` tag and a footer with license links, so the legal posture is visible to anyone who opens a game, not just to people browsing this repo.
 

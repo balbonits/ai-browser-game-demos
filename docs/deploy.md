@@ -2,9 +2,9 @@
 
 This repo is deployed as a static site to **Vercel**.
 
-**Live URL:** <https://ai-browser-game-demos.vercel.app>
+**Primary URL:** <https://games.jdilig.me> &nbsp;·&nbsp; **Mirror:** <https://ai-browser-game-demos.vercel.app>
 
-The Vercel project (`ai-browser-game-demos`) is connected to the GitHub repo, so every push to `main` auto-deploys to production. There's no build step — Vercel just serves the repo's files as static assets.
+The Vercel project (`ai-browser-game-demos`) is connected to the GitHub repo, so every push to `main` auto-deploys to production. There's no build step — Vercel just serves the repo's files as static assets. The custom domain `games.jdilig.me` is attached as a Vercel domain via a `CNAME` at the registrar pointing to `cname.vercel-dns.com`.
 
 ## Files involved
 
