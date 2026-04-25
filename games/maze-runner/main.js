@@ -45,6 +45,11 @@ const C_START    = '#ff3df0';       // magenta start tile
 
 // localStorage helpers.
 const STORAGE_PREFIX = 'maze-runner:best:';
+const SCOREBOARD_PREFIX = 'maze-runner:scores:';
+const SCOREBOARD_LIMIT = 10;
+const HISTORY_KEY = 'maze-runner:history';
+const HISTORY_LIMIT = 20;
+const HISTORY_DISPLAY_LIMIT = 10;     // shown in the on-screen list
 
 function bestKey(seed, diff) {
   return `${STORAGE_PREFIX}${diff}:${seed}`;
@@ -62,6 +67,67 @@ function saveBest(seed, diff, time) {
   return false;
 }
 
+// --- Scoreboard (top 10 per difficulty) ---
+
+function scoreKey(diff) {
+  return `${SCOREBOARD_PREFIX}${diff}`;
+}
+
+function getScores(diff) {
+  try {
+    const raw = localStorage.getItem(scoreKey(diff));
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+// Add a new run to the scoreboard for `diff`. Sorts ascending by time
+// (faster is better); cuts to SCOREBOARD_LIMIT entries. Returns the
+// 1-based rank of the new entry, or 0 if it didn't make the cut.
+function addScore(diff, entry) {
+  const list = getScores(diff);
+  list.push(entry);
+  list.sort((a, b) => a.time - b.time);
+  const trimmed = list.slice(0, SCOREBOARD_LIMIT);
+  localStorage.setItem(scoreKey(diff), JSON.stringify(trimmed));
+  const rank = trimmed.indexOf(entry) + 1;  // 0 if filtered out
+  return rank;
+}
+
+// --- Seed history ---
+//
+// Tracks the last N distinct (seed, diff) combinations the player has
+// started. Most recent first, deduped on (seed,diff): playing the same
+// seed again moves it to the front rather than adding a duplicate.
+
+function getHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function recordHistory(seed, diff) {
+  const list = getHistory();
+  const key = `${diff}:${String(seed)}`;
+  // Drop any prior entry for the same (seed, diff) — we'll re-add at the front.
+  const deduped = list.filter(e => `${e.diff}:${String(e.seed)}` !== key);
+  deduped.unshift({
+    seed: String(seed),
+    diff,
+    lastPlayed: Date.now(),
+  });
+  const trimmed = deduped.slice(0, HISTORY_LIMIT);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed));
+}
+
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
@@ -77,7 +143,7 @@ const keys = {};
 document.addEventListener('keydown', e => { keys[e.key] = true; });
 document.addEventListener('keyup',   e => { keys[e.key] = false; });
 
-let state = 'SPLASH';  // 'SPLASH' | 'PLAYING' | 'WIN'
+let state = 'SPLASH';  // 'SPLASH' | 'PLAYING' | 'WIN' | 'HISTORY'
 
 // Maze data (populated in newGame).
 let maze     = null;
@@ -111,6 +177,13 @@ let lastMoveDir = { dx: 0, dy: 0 };
 let flashMsg  = '';
 let flashTimer = 0;
 let winNewBest = false;
+
+// Last completed run's scoreboard rank — used to highlight the current
+// row on the WIN screen. 0 = didn't make the top-10.
+let winRank = 0;
+// Snapshot of the scoreboard at the time of the win so the renderer
+// shows the post-insert state without re-querying every frame.
+let winScores = [];
 
 // Sound-toggle button.
 const soundBtn = document.getElementById('sound-toggle');
@@ -148,6 +221,9 @@ function newGame(seedInput) {
   player = { col: startCol, row: startRow };
   trail = [{ col: startCol, row: startRow }];
 
+  // Track in seed history for the "retry past runs" picker.
+  recordHistory(maze.seed, diffIdx);
+
   fogSeen = new Uint8Array(cols * rows);
   updateFog();
 
@@ -166,6 +242,7 @@ function newGame(seedInput) {
   audio.init();
   audio.resume();
   audio.startTone();
+  audio.startMusic();
 }
 
 // Inline mulberry32 for use in newGame without re-importing.
@@ -272,6 +349,20 @@ function triggerWin() {
   }
   const gemCount = gems.filter(g => g.collected).length;
   winNewBest = saveBest(maze.seed, diffIdx, elapsed);
+
+  // Push this run onto the per-difficulty top-10 scoreboard. The rank
+  // returned by addScore is 0 if the run didn't make the cut, otherwise
+  // 1-indexed; the WIN renderer uses it to highlight the current row.
+  const entry = {
+    time: elapsed,
+    seed: String(maze.seed),
+    gems: gemCount,
+    gemsTotal: gems.length,
+    when: Date.now(),
+  };
+  winRank = addScore(diffIdx, entry);
+  winScores = getScores(diffIdx);
+
   state = 'WIN';
   audio.winChime();
   flashMsg = winNewBest ? 'NEW BEST!' : 'YOU WIN!';
@@ -645,11 +736,88 @@ function drawSplash() {
 
   ctx.fillStyle = '#8d92a6';
   ctx.font = `9px ${FONT_MONO}`;
-  ctx.fillText('E = custom seed · 1/2/3 = difficulty · M = mute', CW / 2, CH / 2 + 30);
+  ctx.fillText('E = custom seed · H = seed history · 1/2/3 = difficulty · M = mute', CW / 2, CH / 2 + 30);
 
   // Best time hint per difficulty.
   const best = getBest('__any__', diffIdx); // not per-seed on splash
   // (We don't know the seed yet; skip best-time on splash.)
+}
+
+// ---------------------------------------------------------------------------
+// Seed history overlay
+// ---------------------------------------------------------------------------
+//
+// Press H from splash to view the last N (seed, difficulty) pairs the
+// player has started. Number keys 1-9 (and 0 for slot 10) pick a row
+// to replay; ESC or H return to splash.
+
+function drawHistory() {
+  // Background.
+  ctx.fillStyle = 'rgba(6,8,15,0.92)';
+  ctx.fillRect(0, 0, CW, CH);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  ctx.fillStyle = C_WALL;
+  ctx.shadowColor = C_WALL;
+  ctx.shadowBlur = 10;
+  ctx.font = `bold 16px ${FONT_MONO}`;
+  ctx.fillText('SEED HISTORY', CW / 2, 26);
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#8d92a6';
+  ctx.font = `9px ${FONT_MONO}`;
+  ctx.fillText('replay any run · press number key to start', CW / 2, 44);
+
+  const list = getHistory().slice(0, HISTORY_DISPLAY_LIMIT);
+
+  if (list.length === 0) {
+    ctx.fillStyle = '#5a607a';
+    ctx.font = `10px ${FONT_MONO}`;
+    ctx.fillText('no runs yet — start a maze first', CW / 2, CH / 2);
+  } else {
+    // Table.
+    const tableX = 50;
+    const rowH = 14;
+    const headerY = 70;
+
+    ctx.font = `8px ${FONT_MONO}`;
+    ctx.fillStyle = '#5a607a';
+    ctx.textAlign = 'left';
+    ctx.fillText('#',     tableX,        headerY);
+    ctx.fillText('SIZE',  tableX + 22,   headerY);
+    ctx.fillText('SEED',  tableX + 70,   headerY);
+    ctx.fillText('BEST',  tableX + 230,  headerY);
+
+    for (let i = 0; i < list.length; i++) {
+      const e = list[i];
+      const rowY = headerY + 14 + i * rowH;
+      const sizeLabel = (DIFFICULTIES[e.diff]?.label || '?').slice(0, 1);
+      const seedDisp = e.seed.length > 18 ? e.seed.slice(0, 18) + '…' : e.seed;
+      const best = getBest(e.seed, e.diff);
+      const bestStr = best !== null ? formatTime(best) : '—';
+
+      // Slot number key — 1-9 then 0 for slot 10.
+      const slotKey = i < 9 ? String(i + 1) : '0';
+
+      ctx.font = `bold 10px ${FONT_MONO}`;
+      ctx.fillStyle = C_WALL;
+      ctx.fillText(slotKey, tableX, rowY);
+
+      ctx.font = `10px ${FONT_MONO}`;
+      ctx.fillStyle = '#c9cdd9';
+      ctx.fillText(sizeLabel, tableX + 22, rowY);
+      ctx.fillText(seedDisp,  tableX + 70, rowY);
+      ctx.fillStyle = best !== null ? C_GEM : '#5a607a';
+      ctx.fillText(bestStr,   tableX + 230, rowY);
+    }
+  }
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#e6e9f5';
+  ctx.font = `bold 9px ${FONT_MONO}`;
+  ctx.fillText('1-9, 0 = replay slot · ESC or H = back', CW / 2, CH - 14);
 }
 
 // ---------------------------------------------------------------------------
@@ -658,39 +826,106 @@ function drawSplash() {
 
 function drawWin() {
   // Darken the maze underneath.
-  ctx.fillStyle = 'rgba(6,8,15,0.70)';
+  ctx.fillStyle = 'rgba(6,8,15,0.85)';
   ctx.fillRect(0, 0, CW, CH);
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  ctx.font = `bold 22px ${FONT_MONO}`;
+  // --- Top: title + run summary ---
+
+  ctx.font = `bold 18px ${FONT_MONO}`;
   ctx.fillStyle = C_EXIT;
   ctx.shadowColor = C_EXIT;
   ctx.shadowBlur = 14;
-  ctx.fillText('YOU ESCAPED!', CW / 2, CH / 2 - 52);
+  ctx.fillText('YOU ESCAPED!', CW / 2, 22);
   ctx.shadowBlur = 0;
 
-  ctx.font = `11px ${FONT_MONO}`;
-  ctx.fillStyle = '#e6e9f5';
-  ctx.fillText(`Time: ${formatTime(elapsed)}`, CW / 2, CH / 2 - 30);
-
   const gemsCollected = gems.filter(g => g.collected).length;
-  ctx.fillText(`Gems: ${gemsCollected} / ${gems.length}`, CW / 2, CH / 2 - 16);
+  ctx.font = `10px ${FONT_MONO}`;
+  ctx.fillStyle = '#e6e9f5';
+  ctx.fillText(
+    `Time ${formatTime(elapsed)}   ·   Gems ${gemsCollected}/${gems.length}   ·   Seed ${String(maze.seed).slice(0, 14)}`,
+    CW / 2, 42,
+  );
 
-  const best = getBest(maze.seed, diffIdx);
-  if (best !== null) {
-    ctx.fillStyle = winNewBest ? C_GEM : '#8d92a6';
-    ctx.fillText(`Best: ${formatTime(best)}${winNewBest ? '  ★ NEW!' : ''}`, CW / 2, CH / 2 - 2);
+  if (winNewBest) {
+    ctx.fillStyle = C_GEM;
+    ctx.shadowColor = C_GEM;
+    ctx.shadowBlur = 6;
+    ctx.font = `bold 10px ${FONT_MONO}`;
+    ctx.fillText('★ NEW BEST FOR THIS SEED', CW / 2, 56);
+    ctx.shadowBlur = 0;
   }
 
-  ctx.fillStyle = '#8d92a6';
-  ctx.font = `9px ${FONT_MONO}`;
-  ctx.fillText(`Seed: ${maze.seed}`, CW / 2, CH / 2 + 14);
+  // --- Middle: top-10 scoreboard for this difficulty ---
 
+  const diffLabel = DIFFICULTIES[diffIdx].label.toUpperCase();
+  ctx.font = `bold 9px ${FONT_MONO}`;
+  ctx.fillStyle = '#8d92a6';
+  ctx.fillText(`— TOP 10 (${diffLabel}) —`, CW / 2, 76);
+
+  // Table header.
+  const tableX = 60;
+  const tableW = CW - tableX * 2;
+  const rowH = 11;
+  const headerY = 90;
+
+  ctx.font = `8px ${FONT_MONO}`;
+  ctx.fillStyle = '#5a607a';
+  ctx.textAlign = 'left';
+  ctx.fillText('#',     tableX,            headerY);
+  ctx.fillText('TIME',  tableX + 22,       headerY);
+  ctx.fillText('GEMS',  tableX + 96,       headerY);
+  ctx.fillText('SEED',  tableX + 144,      headerY);
+
+  // Rows.
+  ctx.textAlign = 'left';
+  for (let i = 0; i < SCOREBOARD_LIMIT; i++) {
+    const rowY = headerY + 12 + i * rowH;
+    const row = winScores[i];
+    const isCurrent = (i + 1) === winRank;
+
+    if (isCurrent) {
+      // Highlight strip behind the current run.
+      ctx.fillStyle = 'rgba(57,255,20,0.14)';
+      ctx.fillRect(tableX - 6, rowY - rowH / 2, tableW + 12, rowH);
+      ctx.fillStyle = C_EXIT;
+      ctx.shadowColor = C_EXIT;
+      ctx.shadowBlur = 4;
+    } else if (row) {
+      ctx.fillStyle = '#c9cdd9';
+      ctx.shadowBlur = 0;
+    } else {
+      ctx.fillStyle = '#3a4055';
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.font = `9px ${FONT_MONO}`;
+    ctx.fillText(`${i + 1}.`, tableX, rowY);
+
+    if (row) {
+      ctx.fillText(formatTime(row.time),                     tableX + 22,  rowY);
+      ctx.fillText(`${row.gems}/${row.gemsTotal}`,           tableX + 96,  rowY);
+      const seedDisp = String(row.seed).length > 14
+        ? String(row.seed).slice(0, 14) + '…'
+        : String(row.seed);
+      ctx.fillText(seedDisp,                                 tableX + 144, rowY);
+    } else {
+      ctx.fillStyle = '#3a4055';
+      ctx.fillText('—',                                       tableX + 22,  rowY);
+      ctx.fillText('—',                                       tableX + 96,  rowY);
+      ctx.fillText('—',                                       tableX + 144, rowY);
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  // --- Bottom: prompt ---
+
+  ctx.textAlign = 'center';
   ctx.fillStyle = '#e6e9f5';
-  ctx.font = `bold 10px ${FONT_MONO}`;
-  ctx.fillText('R = new maze · E = custom seed', CW / 2, CH / 2 + 32);
+  ctx.font = `bold 9px ${FONT_MONO}`;
+  ctx.fillText('R = new maze · E = custom seed', CW / 2, CH - 12);
 }
 
 // ---------------------------------------------------------------------------
@@ -800,6 +1035,29 @@ document.addEventListener('keydown', e => {
       promptActive = true;
       promptBuffer = '';
       promptError  = '';
+    } else if (e.key === 'h' || e.key === 'H') {
+      state = 'HISTORY';
+    }
+    return;
+  }
+
+  if (state === 'HISTORY') {
+    // ESC or H closes; number keys pick a slot.
+    if (e.key === 'Escape' || e.key === 'h' || e.key === 'H') {
+      state = 'SPLASH';
+      return;
+    }
+    // Slots 1-9 map to indices 0-8; "0" maps to index 9 (the 10th slot).
+    let pickIdx = -1;
+    if (e.key >= '1' && e.key <= '9') pickIdx = parseInt(e.key, 10) - 1;
+    else if (e.key === '0') pickIdx = 9;
+    if (pickIdx >= 0) {
+      const list = getHistory().slice(0, HISTORY_DISPLAY_LIMIT);
+      const entry = list[pickIdx];
+      if (entry) {
+        diffIdx = entry.diff;
+        newGame(entry.seed);
+      }
     }
     return;
   }
@@ -808,10 +1066,15 @@ document.addEventListener('keydown', e => {
     if (e.key === 'r' || e.key === 'R') {
       state = 'SPLASH';
       maze = null;
+      audio.stopMusic();
     } else if (e.key === 'e' || e.key === 'E') {
       promptActive = true;
       promptBuffer = '';
       promptError  = '';
+    } else if (e.key === 'h' || e.key === 'H') {
+      // Open history overlay; current play stays paused under it.
+      // We only allow this from WIN, not mid-PLAYING (would freeze the run).
+      if (state === 'WIN') state = 'HISTORY';
     } else if (e.key === '1') { diffIdx = 0; }
     else if (e.key === '2') { diffIdx = 1; }
     else if (e.key === '3') { diffIdx = 2; }
@@ -894,6 +1157,8 @@ function loop(now) {
 
   if (state === 'SPLASH') {
     drawSplash();
+  } else if (state === 'HISTORY') {
+    drawHistory();
   } else if (state === 'PLAYING' || state === 'WIN') {
     drawTrail();
     drawMaze();

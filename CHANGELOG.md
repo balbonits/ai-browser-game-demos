@@ -40,6 +40,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); dates ar
 - Milestone chime every 100m.
 - Regenerated the `falling-back-death` animation (user re-ran on PixelLab side).
 
+### Maze Runner (v0.2)
+- **Per-difficulty top-10 scoreboard.** Each completed run is added to `localStorage[maze-runner:scores:<diff>]` (sorted by time asc, capped at 10). The win screen renders the top 10 with the just-completed run highlighted in green; rows beyond your run history show as `—` placeholders.
+- **Seed history.** Every started run is recorded in `localStorage[maze-runner:history]` (most-recent first, deduped on `(seed, diff)`, capped at 20). Press `H` from the splash to view the last 10 entries with their best time, then number keys `1-9` (and `0` for slot 10) replay that exact seed at its original difficulty.
+- **Light, soothing ambient music.** New A-minor pentatonic 64-BPM loop with three layers: sustained sine pad on root + fifth, a soft triangle melody (`A4-C5-E5-G5` ascending then `G5-E5-D5-A4` descending), and a sparse high-octave bell ping. Plays during gameplay (and through the WIN screen), stops on return-to-splash, respects the global mute toggle.
+
+### Block Arena (v0.2)
+- **Bug fix: wave-clear infinite loop.** After a wave finished, the conditions in `main.js`'s wave-clear check (`spawning done` + `alive 0` + `wave inactive`) stayed true for the entire inter-wave cooldown, so `onWaveCleared` was firing every rAF frame. `game.wave` and `game.score` rapidly inflated; once a new wave eventually started, the wave index was huge and endless multipliers blew enemy HP into "unkillable" territory. Fix: added a one-shot `cleared` flag to the wave object so the clear event fires exactly once per wave. Verified directly in Puppeteer (1 fire across 500 simulated post-clear frames).
+
 ### Block Arena (v0.1)
 - New game added: first-person shooter, 3D, **Three.js** via [esm.sh](https://esm.sh) CDN. No build step, no installed dependencies. ES modules with an `<script type="importmap">` aliasing `three` and `three/addons/`. Marks the first time this repo introduces a third-party library — earned because real 3D would be impractical without it. (See [`docs/games/block-fps.md`](docs/games/block-fps.md) for stack details.)
 - Polygonal gun viewmodel built from `BoxGeometry` + `EdgesGeometry` outlines parented to the camera. Recoil + muzzle flash + tracer beams via raycast hitscan firing.

@@ -9,6 +9,10 @@
 //   - gem pickup: bright ascending chirp
 //   - win chime: ascending arpeggio + long pad
 //   - start tone: short rising two-note cue
+//   - music: slow ambient pad in A-minor pentatonic + sparse high
+//     twinkle melody on a softer sine voice. Loops indefinitely while
+//     the player is in a maze. ~64 BPM — meant to fade into the
+//     background, not draw attention.
 
 const STORAGE_KEY = 'maze-runner:muted';
 
@@ -17,7 +21,10 @@ export class AudioEngine {
     this.ctx = null;
     this.master = null;
     this.sfxGain = null;
+    this.musicGain = null;
     this.muted = localStorage.getItem(STORAGE_KEY) === '1';
+    this._musicTimer = null;
+    this._musicStep = 0;
   }
 
   init() {
@@ -31,6 +38,12 @@ export class AudioEngine {
     this.sfxGain = this.ctx.createGain();
     this.sfxGain.gain.value = 0.5;
     this.sfxGain.connect(this.master);
+
+    // Music sits well below SFX so the foreground sounds always cut
+    // through. 0.10 is "pleasantly there but ignorable."
+    this.musicGain = this.ctx.createGain();
+    this.musicGain.gain.value = 0.10;
+    this.musicGain.connect(this.master);
   }
 
   resume() {
@@ -137,5 +150,111 @@ export class AudioEngine {
     // Long held pad note.
     this._note({ freq: 523, type: 'sine', dur: 0.8, attack: 0.02, release: 0.5, vol: 0.20, when: t });
     this._note({ freq: 784, type: 'sine', dur: 0.8, attack: 0.02, release: 0.5, vol: 0.16, when: t });
+  }
+
+  // --- Music ---
+  //
+  // Slow ambient piece in A-minor pentatonic. Three layers:
+  //   - pad : long held A3/E4 sine notes that fire every 8 steps
+  //           and sustain for ~7 step lengths, giving a continuous bed.
+  //   - lead: sparse triangle melody (A4 / C5 / E5 / G5 / E5 / D5 / …)
+  //           on every other step, gently winding up and back down.
+  //   - bell: very high, very sparse sine pings to add space.
+  //
+  // 64 BPM, 16 steps per phrase. Loops indefinitely until stopMusic().
+
+  startMusic(bpm = 64) {
+    if (!this.ctx || this._musicTimer) return;
+
+    // step duration = quarter note. eighth = step / 2.
+    const step = 60 / bpm;
+
+    // 16 steps per phrase. 0 = rest. Frequencies in Hz.
+    const lead = [
+      // bar 1: ascend through pentatonic
+      440, 0, 0, 523, 0, 0, 659, 0,
+      // bar 2: descend back
+      784, 0, 659, 0, 587, 0, 440, 0,
+    ];
+    const pad = [
+      // root (A3) on 1, fifth (E4) on 9
+      220, 0, 0, 0, 0, 0, 0, 0,
+      330, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    const bells = [
+      // sparse high-octave pings — give the loop subtle motion without
+      // calling attention to itself.
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 1319, 0, 0, 0, 0,
+    ];
+
+    this._musicStep = 0;
+
+    // Restore music gain in case stopMusic() faded it down recently.
+    if (this.musicGain) {
+      const t = this.ctx.currentTime;
+      this.musicGain.gain.cancelScheduledValues(t);
+      this.musicGain.gain.setTargetAtTime(0.10, t, 0.2);
+    }
+
+    const tick = () => {
+      const i = this._musicStep % lead.length;
+      const lf = lead[i];
+      if (lf) {
+        // Soft triangle lead — long release for a flowing feel.
+        this._note({
+          freq: lf, type: 'triangle',
+          dur: step * 1.6, attack: 0.04, release: 0.6,
+          vol: 0.16, dest: this.musicGain,
+        });
+        // Gentle harmonic above (an octave + fifth) at low volume so
+        // the lead has air around it.
+        this._note({
+          freq: lf * 1.5, type: 'sine',
+          dur: step * 1.2, attack: 0.05, release: 0.5,
+          vol: 0.05, dest: this.musicGain,
+        });
+      }
+      const pf = pad[i];
+      if (pf) {
+        // Long sustained pad — overlaps the next pad voice for a
+        // continuous bed.
+        this._note({
+          freq: pf, type: 'sine',
+          dur: step * 9, attack: 0.5, release: 1.5,
+          vol: 0.10, dest: this.musicGain,
+        });
+        // Octave above on a triangle for a touch of warmth.
+        this._note({
+          freq: pf * 2, type: 'triangle',
+          dur: step * 9, attack: 0.5, release: 1.5,
+          vol: 0.04, dest: this.musicGain,
+        });
+      }
+      const bf = bells[i];
+      if (bf) {
+        this._note({
+          freq: bf, type: 'sine',
+          dur: 1.4, attack: 0.01, release: 1.0,
+          vol: 0.08, dest: this.musicGain,
+        });
+      }
+      this._musicStep++;
+    };
+
+    tick();
+    this._musicTimer = setInterval(tick, step * 1000);
+  }
+
+  stopMusic(fadeSec = 0.5) {
+    if (this._musicTimer) {
+      clearInterval(this._musicTimer);
+      this._musicTimer = null;
+    }
+    if (this.musicGain && this.ctx) {
+      const t = this.ctx.currentTime;
+      this.musicGain.gain.cancelScheduledValues(t);
+      this.musicGain.gain.setTargetAtTime(0, t, fadeSec / 3);
+    }
   }
 }

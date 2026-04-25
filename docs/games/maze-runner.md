@@ -1,6 +1,6 @@
 # Maze Runner
 
-**Slug:** `maze-runner` &nbsp;·&nbsp; **Folder:** `games/maze-runner/` &nbsp;·&nbsp; **Status:** playable (v0.1)
+**Slug:** `maze-runner` &nbsp;·&nbsp; **Folder:** `games/maze-runner/` &nbsp;·&nbsp; **Status:** playable (v0.2)
 
 Top-down procedural maze runner. Navigate a randomly generated maze from start to exit, collect gems along the way, and beat your best time. The same seed always produces the same maze — share seeds with friends.
 
@@ -18,6 +18,7 @@ Three difficulty sizes let you pick a quick run (Small, ~2 minutes) or a long ch
 | `Space` or `Enter` (on splash) | Start a new maze with a random seed |
 | `R` | Return to splash / regenerate with a new random seed |
 | `E` | Open custom seed entry prompt |
+| `H` | Open seed history (replay past runs) |
 | `1` / `2` / `3` | Switch difficulty: Small / Medium / Large |
 | `M` | Mute / unmute audio |
 
@@ -62,6 +63,20 @@ Neon dark-room aesthetic, consistent with the neon-tower-defense palette:
 | Trail | Fading cyan rectangles, up to 40 cells deep |
 
 Fog of war: cells more than 5 Manhattan-distance from the player are invisible until visited. Previously seen cells render in the dim palette. The minimap in the bottom-right corner reveals explored topology at 3 px/cell.
+
+## Scoreboard
+
+After each completed run the time is added to a per-difficulty top-10 list, persisted in `localStorage` under `maze-runner:scores:<diffIdx>` (a JSON array of `{ time, seed, gems, gemsTotal, when }` rows, sorted ascending by time and capped at 10). The win screen renders that list with the just-completed run highlighted in green; rows beyond the player's run history show as `—` placeholders.
+
+Per-seed best times still persist separately under `maze-runner:best:<diffIdx>:<seed>` and surface as the `BEST` line on the in-run HUD plus the `★ NEW BEST FOR THIS SEED` banner on win.
+
+## Seed history
+
+Every started run is recorded in `localStorage[maze-runner:history]` (most-recent first, deduped on `(seed, diff)`, capped at 20 entries). Press `H` from the splash to view the last 10 entries with their best time, then number keys `1-9` (and `0` for slot 10) replay that exact seed at the difficulty it was first played on. Custom seeds entered via `E` and random seeds from `Space` both feed the history; replaying a seed bumps it to the top of the list.
+
+## Music
+
+A slow ambient bed plays during gameplay (PLAYING + WIN states). It's an A-minor pentatonic loop at 64 BPM with three layers: a sustained sine pad on the root + fifth that overlaps to give a continuous bed, a soft triangle melody that ascends through `A4 / C5 / E5 / G5` and descends through `G5 / E5 / D5 / A4`, and a sparse high-octave bell ping mid-phrase. Volume is 0.10 of master so it sits well under the SFX. Music starts when a run begins, stops when the player returns to splash via `R`, and respects the global mute toggle.
 
 ## Mechanics
 
@@ -138,3 +153,4 @@ Moves are tile-snapped (one cell per step). Pressing a direction fires immediate
 ## Changelog
 
 - `2026-04-24` — v0.1: initial playable build. Recursive backtracker DFS, Mulberry32 seeded RNG, fog of war, gem collectibles, minimap, custom seed prompt, three difficulty sizes, localStorage best-time, Web Audio SFX (footstep / bump / gem / start / win).
+- `2026-04-25` — v0.2: per-difficulty top-10 scoreboard (`maze-runner:scores:<diff>`), shown on the win screen with the current run highlighted in green. Light, soothing ambient music — A-minor pentatonic 64 BPM loop with sustained sine pad + soft triangle melody + sparse high-octave bell pings — plays during gameplay and respects the global mute. Seed history (`maze-runner:history`) records the last 20 distinct (seed, diff) pairs; press `H` from the splash to open a replayable list with number-key shortcuts.
