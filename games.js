@@ -10,6 +10,11 @@ const GAMES = [
     title: "Neon Tower Defense",
     description: "Shape-based tower defense with neon aesthetic. All visuals and audio synthesized in code — no sprites, no audio files.",
   },
+  {
+    slug: "block-fps",
+    title: "Block Arena",
+    description: "First-person shooter with a polygonal gun and 3D block enemies. Three.js, no build step.",
+  },
 ];
 
 const list = document.getElementById("game-list");

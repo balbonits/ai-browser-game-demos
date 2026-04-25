@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Block Arena · AI Browser Game Demos</title>
+  <meta name="description" content="Block Arena — first-person shooter built entirely by AI. Polygonal gun, 3D block enemies, vanilla Three.js." />
+  <meta name="copyright" content="© 2026 John Dilig" />
+  <meta name="author" content="John Dilig" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Three.js + addons via CDN. No build step. The importmap lets every
+       module write `import * as THREE from 'three'` like a real package. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://esm.sh/three@0.170.0",
+      "three/addons/": "https://esm.sh/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <a class="back" href="../../index.html">← all games</a>
+
+  <div class="stage">
+    <div class="frame" id="frame">
+      <canvas id="game"></canvas>
+
+      <!-- HUD overlays — purely cosmetic HTML on top of the WebGL canvas. -->
+      <div class="hud">
+        <!-- Crosshair -->
+        <div class="crosshair" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </div>
+
+        <!-- Stats -->
+        <div class="hud-top-left">
+          <div class="stat-label">HP</div>
+          <div class="hp-bar"><div class="hp-fill" id="hp-fill"></div></div>
+          <div class="hp-num" id="hp-num">100</div>
+        </div>
+
+        <div class="hud-top-right">
+          <div class="stat" id="stat-wave">WAVE 0</div>
+          <div class="stat dim" id="stat-score">SCORE 0</div>
+          <div class="stat dim" id="stat-kills">KILLS 0</div>
+        </div>
+
+        <button
+          class="sound-toggle"
+          id="sound-toggle"
+          type="button"
+          aria-label="Mute sound"
+          title="Mute / unmute (M)"
+        >🔊</button>
+
+        <div class="hud-bottom">
+          <div class="hint" id="hint">click to play · WASD move · mouse look · click fire · Esc pause</div>
+        </div>
+
+        <!-- State overlays (intro / paused / dead). Filled in by JS. -->
+        <div class="overlay" id="overlay">
+          <div class="overlay-card">
+            <h1 id="overlay-title">BLOCK ARENA</h1>
+            <p id="overlay-sub">click to play</p>
+            <p id="overlay-meta" class="meta-line"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="meta">
+      <strong>Block Arena</strong> — first-person shooter, polygonal gun, geometric enemies. Three.js + Canvas. <kbd>WASD</kbd> move · <kbd>Mouse</kbd> look · <kbd>Click</kbd> fire · <kbd>Esc</kbd> pause · <kbd>M</kbd> mute
+    </div>
+    <div class="legal-strip">
+      © 2026 John Dilig ·
+      code <a href="../../LICENSE">MIT</a> ·
+      Three.js loaded via <a href="https://esm.sh" rel="noopener">esm.sh</a> CDN ·
+      visuals + audio synthesized in code (no third-party assets) ·
+      <a href="../../credits.html">credits</a>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

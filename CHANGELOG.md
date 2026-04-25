@@ -40,6 +40,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); dates ar
 - Milestone chime every 100m.
 - Regenerated the `falling-back-death` animation (user re-ran on PixelLab side).
 
+### Block Arena (v0.1)
+- New game added: first-person shooter, 3D, **Three.js** via [esm.sh](https://esm.sh) CDN. No build step, no installed dependencies. ES modules with an `<script type="importmap">` aliasing `three` and `three/addons/`. Marks the first time this repo introduces a third-party library — earned because real 3D would be impractical without it. (See [`docs/games/block-fps.md`](docs/games/block-fps.md) for stack details.)
+- Polygonal gun viewmodel built from `BoxGeometry` + `EdgesGeometry` outlines parented to the camera. Recoil + muzzle flash + tracer beams via raycast hitscan firing.
+- Block enemies: 3 types (grunt / charger / heavy) — each a colored cube + edge outlines, walks straight at the player, AABB-collides with arena pillars. Heavy boss-block has a beefier explosion + sound on death.
+- Wave system: 8 hand-tuned templates with spawn budgets, intervals, kinds-pool, and a concurrent-alive cap. Endless mode loops the last template with +20% HP / +10% count per wave.
+- FPS controls via Three's `PointerLockControls`: click-to-lock for mouse-look, `WASD` movement (acceleration + friction), `Shift` to walk, `Esc` releases the lock and pauses, `P` also pauses, `M` mutes.
+- Web Audio synth: punchy gun fire (low square + filtered noise), enemy hits + kills, player damage thud, wave-start/clear chord stabs, slow descending defeat phrase, low-tempo D-minor ambient pad music.
+- Persists `best-wave`, `best-score`, and `muted` to `localStorage`.
+- Registered in `games.js`, doc at [`docs/games/block-fps.md`](docs/games/block-fps.md).
+
 ### Neon Tower Defense (v0.2)
 - **Endless mode.** After wave 12 the campaign no longer ends — the wave counter keeps climbing into score-attack territory. The 12 wave templates cycle (`idx → WAVES[(idx-1) % 12]`) and a per-wave multiplier scales enemy HP `+30%`, speed `+4%` (capped at `1.40×`), spawn count `+8%`, and kill reward `+25%`. Reward scales close to the HP curve so the player stays solvent through upgrades. Defeat is the only run-ender now. HUD label flips from `NN/12` to `NN ∞`, `best: wave NN ∞` shows on the intro, and a `SURVIVED N WAVES` milestone fires every 5 endless waves.
 
