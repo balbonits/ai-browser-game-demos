@@ -40,6 +40,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); dates ar
 - Milestone chime every 100m.
 - Regenerated the `falling-back-death` animation (user re-ran on PixelLab side).
 
+### Neon Tower Defense (v0.1)
+- New game added: shape-based tower defense in a neon CRT aesthetic. **No PixelLab, no audio files.** Every visual is a geometric primitive drawn from `render.js`; every sound is synthesized at runtime in `audio.js`. Intended as a counterpoint to Running Man's pixel-art pipeline — the same engine philosophy (vanilla JS + Canvas2D + Web Audio), but a completely different aesthetic stack.
+- 12 hand-tuned waves with 3 boss waves (4, 8, 12). 3 tower types × 3 upgrade levels each (Bolt/Pulse/Spike triangle/square/diamond). 4 enemy shapes (square / tri / hex / diamond-boss). Build / upgrade / sell economy with a 70% refund. Mechanics include AoE splash, pierce, and slow.
+- Modules: `main.js` (state machine + loop + input), `config.js` (tables + palette), `map.js` (path + buildable mask), `render.js` (neon shape primitives + glow + particles), `enemies.js`, `towers.js`, `projectiles.js`, `waves.js`, `audio.js`.
+- Persists best wave + mute preference in `localStorage` (`neon-td:best` / `neon-td:muted`).
+- Registered in `games.js`, doc at [`docs/games/neon-tower-defense.md`](docs/games/neon-tower-defense.md).
+
 ### Running Man (v0.2)
 - **Art swap.** `cactus` → felled `log`, `crate` → road `crack`, rock regenerated without the bag. Mid-distance blue mountains replaced with a dense pine `forest.png` banner. Three cloud variants (`cloud.png`, `cloud-large.png`, `cloud-small.png`) clustered into bunches with sky gaps in a 960 px banner; horizontal flips give extra silhouette variety.
 - **Layered horizon.** Far mountains and forest both tile with 30% overlap so peaks and trees blend seam-free. Cloud band shifted 20 px down. Far mountains anchored 31 px below the natural horizon to free up sky.

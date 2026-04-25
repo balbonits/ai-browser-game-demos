@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Neon Tower Defense · AI Browser Game Demos</title>
+  <meta name="description" content="Neon Tower Defense — a shape-based tower defense built entirely by AI. No sprites: every visual is geometric and synthesized in code." />
+  <meta name="copyright" content="© 2026 John Dilig" />
+  <meta name="author" content="John Dilig" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">← all games</a>
+
+  <div class="stage">
+    <div class="frame">
+      <canvas id="game" width="480" height="270"></canvas>
+      <div class="hud-top">
+        <button
+          class="sound-toggle"
+          id="sound-toggle"
+          type="button"
+          aria-label="Mute sound"
+          title="Mute / unmute (M)"
+        >🔊</button>
+      </div>
+      <div class="hud-bottom">
+        <div class="hint" id="hint">click a tower button or press 1/2/3</div>
+      </div>
+    </div>
+    <div class="meta">
+      <strong>Neon Tower Defense</strong> — place towers, survive 12 waves. <kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd> select · <kbd>Space</kbd> start wave · <kbd>P</kbd> pause · <kbd>Esc</kbd> cancel · <kbd>M</kbd> mute
+    </div>
+    <div class="legal-strip">
+      © 2026 John Dilig ·
+      code <a href="../../LICENSE">MIT</a> ·
+      art &amp; audio synthesized in code (no third-party assets) ·
+      <a href="../../credits.html">credits</a>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

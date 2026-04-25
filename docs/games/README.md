@@ -24,3 +24,4 @@ Use [`_template.md`](_template.md) as the starting point when adding a new game 
 Game docs are listed here in chronological order of when they were started. Update this list when adding a new game.
 
 - [`running-man.md`](running-man.md) — side-scrolling auto-runner (first game, vanilla JS).
+- [`neon-tower-defense.md`](neon-tower-defense.md) — shape-based tower defense, neon CRT aesthetic, 100% code-drawn visuals + synthesized audio (no PixelLab, no audio files).

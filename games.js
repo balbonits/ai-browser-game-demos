@@ -5,6 +5,11 @@ const GAMES = [
     title: "Running Man",
     description: "Side-scrolling auto-runner. Jump to survive. Pixel art by PixelLab.",
   },
+  {
+    slug: "neon-tower-defense",
+    title: "Neon Tower Defense",
+    description: "Shape-based tower defense with neon aesthetic. All visuals and audio synthesized in code — no sprites, no audio files.",
+  },
 ];
 
 const list = document.getElementById("game-list");
