@@ -2,7 +2,8 @@
 //
 // Each game is a self-contained static folder under public/games/<slug>/.
 // The fields here populate the home-page card grid; the live links resolve
-// to /games/<slug>/index.html (Vite serves public/ at the site root).
+// to /games/<slug> (Vite serves public/ at the site root; Vercel's cleanUrls
+// + directory-index resolution maps that to /games/<slug>/index.html).
 
 export type Game = {
   slug: string;

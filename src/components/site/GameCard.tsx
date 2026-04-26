@@ -5,7 +5,7 @@ import { Icon } from '@/components/icons';
 type Props = { game: Game };
 
 export default function GameCard({ game }: Props) {
-  const href = `/games/${game.slug}/index.html`;
+  const href = `/games/${game.slug}`;
 
   const handleClick = (e: MouseEvent<HTMLLIElement>) => {
     if ((e.target as HTMLElement).closest('a')) return;
