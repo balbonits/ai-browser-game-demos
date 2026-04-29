@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Neon Blocks · AI Browser Game Demos</title>
+  <meta name="description" content="Neon Blocks — a neon-CRT Tetris-style falling-block puzzle built entirely by AI. SRS rotation, T-spins, layered synthesized music." />
+  <meta name="copyright" content="© 2026 John Dilig" />
+  <meta name="author" content="John Dilig" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="/">← all games</a>
+
+  <div class="stage">
+    <div class="frame">
+      <canvas id="game" width="480" height="270"></canvas>
+      <div class="hud-top">
+        <button
+          class="sound-toggle"
+          id="sound-toggle"
+          type="button"
+          aria-label="Mute sound"
+          title="Mute / unmute (M)"
+        >🔊</button>
+      </div>
+    </div>
+    <div class="meta">
+      <strong>Neon Blocks</strong> — SRS rotation · T-spins · layered synth music ·
+      <kbd>←→</kbd>/<kbd>AD</kbd> move ·
+      <kbd>↑</kbd>/<kbd>X</kbd> rotate CW ·
+      <kbd>Z</kbd> rotate CCW ·
+      <kbd>↓</kbd>/<kbd>S</kbd> soft drop ·
+      <kbd>Space</kbd> hard drop ·
+      <kbd>Shift</kbd>/<kbd>C</kbd> hold ·
+      <kbd>P</kbd>/<kbd>Esc</kbd> pause ·
+      <kbd>R</kbd> menu ·
+      <kbd>M</kbd> mute
+    </div>
+    <div class="legal-strip">
+      © 2026 John Dilig ·
+      code <a href="../../LICENSE">MIT</a> ·
+      all visuals and audio synthesized in code (no third-party assets) ·
+      <a href="../../credits.html">credits</a>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

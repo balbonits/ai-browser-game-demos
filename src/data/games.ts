@@ -50,4 +50,13 @@ export const GAMES: Game[] = [
       'Procedurally generated mazes seeded by a string or number. Race the clock, collect gems.',
     tags: ['Vanilla JS', 'Canvas2D', 'Procedural', 'Web Audio'],
   },
+  {
+    slug: 'neon-blocks',
+    title: 'Neon Blocks',
+    year: '2026',
+    kind: 'Falling-block puzzle',
+    description:
+      'Full-featured Tetris-style puzzle with SRS rotation, T-spins, hold, ghost piece, and layered synthesized music that grows with your level.',
+    tags: ['Vanilla JS', 'Canvas2D', 'Web Audio'],
+  },
 ];
