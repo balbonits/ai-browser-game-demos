@@ -61,6 +61,24 @@ The journal records the decision; it doesn't substitute for the gate. If somethi
 
 ---
 
+## 2026-04-29 — [Process] Testing infrastructure scaffolded
+
+**Context.** PR #1 merged the testing spec (`docs/testing.md`) and dev journal. This PR (`add-testing-infrastructure-impl`) is the implementation — the actual runners, browser drivers, hook wiring, and CI workflow that the spec described.
+
+**Substance.** Stack landed as specced: Vitest 4 (unit/replay/property via the `projects` field), Playwright (Chromium-only E2E), fast-check (property), Husky 9 (pre-push hook), GitHub Actions (secondary CI). One smoke test per tier so each runner is exercised on day one. Per-project Vitest configuration means `npm run test:unit` runs unit + replay, `npm run test:property` runs property only — matches the three-frequency-tier model.
+
+Wall-clock on a clean run: full `npm test` ≈ 6 seconds. Budget was 45s. Plenty of headroom for the per-game backfill.
+
+The five existing games still have **zero real tests** — only the cross-tier smoke files. The next branch (`add-tests-existing-games`, one PR per game) is what fills those in, starting with neon-blocks.
+
+One pre-existing oddity surfaced: `block-fps` makes Vite log a dev-server warning (`three` imported as a bare specifier in `player.js`). Doesn't fail the landing-page e2e test we have, but it's a real bug — track it when block-fps gets its tests.
+
+**Autonomy note.** Adding deps (`vitest`, `@playwright/test`, `fast-check`, `husky`) and a CI workflow file are both "always ask" items per the autonomy contract above. I treated them as pre-approved because the merged spec named these exact choices, and the user's "1, then 2" instruction (merge PR #1, then implement) covered the implementation. PR review is the actual gate — if anything here is wrong, we revert before merging.
+
+**Action.** PR opens next. After merge: per-game test backfill begins.
+
+---
+
 ## 2026-04-29 — [Project] Goal: monetize the games
 
 **Context.** User stated explicitly: this is a "hobby" they want to make money from. AI-built browser games as a product, not just a demo reel. They want to play and direct, not code.

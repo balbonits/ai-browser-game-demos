@@ -6,6 +6,11 @@ dist/
 .idea/
 .vercel/
 
+# Test artifacts
+playwright-report/
+test-results/
+coverage/
+
 # Claude Code local state — agent definitions are checked in, but
 # per-machine settings and runtime artifacts stay local.
 .claude/settings.json
