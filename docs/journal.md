@@ -61,6 +61,50 @@ The journal records the decision; it doesn't substitute for the gate. If somethi
 
 ---
 
+## 2026-04-29 — [Decision] Cloud CI deferred; local pre-push hook is the only mechanical gate
+
+**Context.** PR #2 originally included a `.github/workflows/test.yml` running the four-tier suite on every push and PR — exactly as specced in PR #1. While that PR was open, the user said: "do you have Github CI or Copilot code review enabled? if so, disable them & just run CI locally + remove Copilot code review since I'm out of tokens for it."
+
+**Substance.** Investigation:
+
+- **Copilot code review** — not actually enabled on this repo. No config files, no rulesets, no reviews on PR #1 or #2. Nothing to remove from the repo. (User-level Copilot settings live at github.com/settings/copilot, outside this repo's reach.)
+- **GitHub Actions** — only `test.yml` (the workflow we'd just added). It ran once on PR #2 and succeeded. Now deleted from PR #2 before merge, so it never lands on `main`.
+
+The reasoning is asymmetric: the cost of a missed cloud check is "we discover it on the next local run." The cost of cloud CI being on is "tokens spent on every push, including one-line fixes." Local hook runs the suite in ~6 seconds. Cloud doesn't earn its keep at this scale.
+
+The CI-related sections of `docs/testing.md` were rewritten in the same commit:
+
+- Tooling list: GitHub Actions removed, Husky added explicitly.
+- AI workflow diagram: "CI" box → "pre-push hook" + "user PR review."
+- The full "CI integration" section is now "currently disabled" with reasoning + the workflow YAML preserved as reference for re-enabling later.
+- "Adding a new game" checklist no longer includes "CI is green."
+
+**Action.** Workflow file deleted. Spec updated in the same commit. PR #2 still tells one atomic story: "scaffold the test runners + the only gate is local."
+
+If we ever re-enable cloud CI, that's a one-file change (paste the reference YAML back) plus a new journal entry recording why we changed our mind.
+
+---
+
+## 2026-04-29 — [Process] Testing infrastructure scaffolded
+
+**Context.** PR #1 merged the testing spec (`docs/testing.md`) and dev journal. This PR (`add-testing-infrastructure-impl`) is the implementation — the actual runners, browser drivers, and hook wiring the spec described.
+
+**Substance.** Stack landed: Vitest 4 (unit/replay/property via the `projects` field), Playwright (Chromium-only E2E), fast-check (property), Husky 9 (pre-push hook). One smoke test per tier so each runner is exercised on day one. Per-project Vitest configuration means `npm run test:unit` runs unit + replay, `npm run test:property` runs property only — matches the three-frequency-tier model.
+
+Cloud CI was scaffolded too but pulled before merge — see the decision entry above.
+
+Wall-clock on a clean run: full `npm test` ≈ 6 seconds. Budget was 45s. Plenty of headroom for the per-game backfill.
+
+The five existing games still have **zero real tests** — only the cross-tier smoke files. The next branch (`add-tests-existing-games`, one PR per game) is what fills those in, starting with neon-blocks.
+
+One pre-existing oddity surfaced: `block-fps` makes Vite log a dev-server warning (`three` imported as a bare specifier in `player.js`). Doesn't fail the landing-page e2e test we have, but it's a real bug — track it when block-fps gets its tests.
+
+**Autonomy note.** Adding deps (`vitest`, `@playwright/test`, `fast-check`, `husky`) is technically an "always ask" item per the autonomy contract above. I treated it as pre-approved because the merged spec named these exact choices, and the user's "1, then 2" instruction (merge PR #1, then implement) covered the implementation. PR review is the actual gate — if anything here is wrong, we revert before merging.
+
+**Action.** PR open at #2. After merge: per-game test backfill begins.
+
+---
+
 ## 2026-04-29 — [Project] Goal: monetize the games
 
 **Context.** User stated explicitly: this is a "hobby" they want to make money from. AI-built browser games as a product, not just a demo reel. They want to play and direct, not code.

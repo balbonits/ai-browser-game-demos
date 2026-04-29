@@ -32,7 +32,7 @@ The pipeline is not a one-time scaffold. It is the operating system.
 
 A solo human developer plays every role: client, manager, critic, QA, salesman. Their bottleneck is biology — fatigue, mood, blind spots, an imperfect brain.
 
-AI's bottleneck is the opposite: no biological inconsistency, but no biological judgment either. **Consistency is the advantage. Use it.** A rigorous spec → test → code → CI loop is something AI executes identically every time. The same spec, fed through the same pipeline, produces the same kind of output. That is not a limitation; that is the point.
+AI's bottleneck is the opposite: no biological inconsistency, but no biological judgment either. **Consistency is the advantage. Use it.** A rigorous spec → test → code → pre-push-hook loop is something AI executes identically every time. The same spec, fed through the same pipeline, produces the same kind of output. That is not a limitation; that is the point.
 
 This doc exists to make that loop explicit and repeatable, so the consistency does its job.
 
@@ -66,7 +66,8 @@ These are not up for debate without a separate conversation:
 - **Vitest** for unit / replay / property. Uses Vite's config. Native ES modules. No Jest.
 - **Playwright** for E2E. Chromium only by default. No Cypress.
 - **fast-check** for property tests. Small, pure JS, well-maintained.
-- **GitHub Actions** for CI. One workflow, one job, all four tiers.
+- **Husky** for the pre-push hook. The local hook is the only mechanical gate.
+- **No cloud CI.** GitHub Actions / Copilot review are intentionally off. See [CI integration](#ci-integration-currently-disabled) for the reasoning.
 
 Justification: this is the standard stack for **web games** (Phaser, Pixi, vanilla canvas all use it). Game industry tools differ by engine (Unity Test Framework, Unreal Automation, Godot GUT) — for our platform, this is the equivalent.
 
@@ -75,7 +76,7 @@ Why these specifically:
 - Vitest because it shares Vite config and we're already on Vite.
 - Playwright because it's faster than Cypress, has better APIs, and has deterministic webserver autostart.
 - fast-check because property-based testing is genuinely game-industry-coded (heavy use in roguelikes, fighting games, RTSes for invariant verification) and fast-check is the JS standard.
-- GitHub Actions because the repo lives there and the free tier handles our scale.
+- Husky because we need the pre-push hook to be auto-installed via `npm install` — manual `git config core.hooksPath` is a footgun.
 
 ## Folder layout
 
@@ -322,9 +323,16 @@ Tests change *who* certifies. Right now, the dev agent writes code and reports d
         │ tests              │ code
         └─────────┬──────────┘
                   ▼
-            ┌──────────┐
-            │   CI     │ — final court
-            └──────────┘
+          ┌──────────────┐
+          │  pre-push    │ — final mechanical court
+          │     hook     │   (local; no cloud CI)
+          └──────────────┘
+                  │
+                  ▼
+          ┌──────────────┐
+          │   user PR    │ — final human court
+          │    review    │
+          └──────────────┘
 ```
 
 **Roles:**
@@ -332,7 +340,8 @@ Tests change *who* certifies. Right now, the dev agent writes code and reports d
 - **Orchestrator (Claude main thread)** — owns the spec. Writes it, hands it to subagents, owns the final commit.
 - **`tester` subagent** *(new — to be defined in `.claude/agents/`)* — reads the spec, writes tests *first*, never touches game code. Tests are committed before implementation.
 - **`dev` subagent** *(existing)* — writes game code. May read tests but cannot edit them. Required to run `npm test` and report green before claiming done.
-- **CI** — runs `npm test` on PR. Red blocks merge. The court that doesn't read prose.
+- **Pre-push hook** — runs `npm test` before any push. Red blocks the push. The court that doesn't read prose.
+- **PR review (human)** — the user reads the diff and approves the merge. The court that does read prose.
 
 **Why this works:**
 
@@ -344,13 +353,14 @@ Tests change *who* certifies. Right now, the dev agent writes code and reports d
 
 ## The local development cycle
 
-**The local test run is the gate.** Cloud CI (GitHub Actions) is a backup, not the primary check. Every PR — even one-line fixes — runs `npm test` locally before being committed and pushed.
+**The local test run is the gate. There is no cloud gate.** Every PR — even one-line fixes — runs `npm test` locally before being committed and pushed. The Husky pre-push hook enforces this mechanically.
 
 This is a deliberate constraint, not a fallback:
 
-- **No tokens spent on cloud CI for routine work.** The user runs Claude locally; cloud CI minutes are a finite resource and not always available.
+- **No cloud-AI tokens spent on routine work.** The user has finite Copilot / cloud-CI capacity. Burning it on every push is waste when the local hook already catches red tests.
 - **The orchestrator is the test runner.** When the dev agent reports done, the orchestrator runs `npm test` itself before claiming the work complete.
 - **Per-PR turnaround is wall-clock time, not background time.** Slow tests cost the user real time. Keep the suite fast.
+- **The user's PR review is the only human gate.** Mechanical = pre-push hook. Human = PR review. No third actor.
 
 ### The rhythm
 
@@ -411,27 +421,46 @@ First-time setup happens automatically via `npm install` (Husky installs git hoo
 npx playwright install chromium
 ```
 
-## CI integration (optional, secondary)
+## CI integration (currently disabled)
 
-GitHub Actions is configured but **not relied upon as the gate**. Its purpose:
+There is no GitHub Actions workflow and no Copilot review on this repo. Both were considered and intentionally turned off.
 
-- Catches local-environment-specific bugs (different Node version, missing browser binary, etc.).
-- Provides a public green badge and a record on PRs.
-- Catches the case where someone forgets to run `npm test` locally.
+**Why disabled.** The user's cloud-AI tokens (Copilot, cloud reviewers) are finite and not always available. Burning them on routine pushes is waste when the local Husky pre-push hook already runs the full suite in ~6 seconds. The cost of a missed cloud check is "we discover it on the next local run"; the cost of cloud-CI being on is "tokens spent on every push, even one-line fixes." Asymmetric — keep it off.
 
-Workflow (`.github/workflows/test.yml`):
+**What this means in practice:**
 
-1. Checkout
-2. Node 22 LTS, `npm ci`
-3. `npm run test:unit`
-4. `npm run test:property`
-5. `npx playwright install --with-deps chromium`
-6. `npm run test:e2e`
-7. Upload Playwright HTML report on failure
+- `git push` runs `npm test` locally via the pre-push hook. If it's red, the push is blocked. That's the only mechanical gate.
+- PRs do not get an Actions status check. PRs do not get a Copilot review. The only review is the user reading the diff.
+- A fresh clone runs `npm install` (Husky activates the hook) + `npx playwright install chromium` (E2E browsers). After that, `npm test` is fully self-contained on the developer's machine.
 
-One job, sequential. Total runtime target: under 3 minutes. CI runs the full four-tier suite — wall-clock matters less in cloud since it doesn't block your local loop.
+**Reference workflow if we re-enable it later.** Below is the workflow shape that was originally specced. If/when the user has cloud capacity and wants a second pair of eyes, drop this back into `.github/workflows/test.yml`:
 
-**Master the CI as it stabilizes.** Watch its runs, learn its failure modes, treat a red CI as a signal worth investigating. Over time it becomes a second pair of eyes — local catches what local catches; CI catches the rest (different Node version, headless browser quirks, missing-on-fresh-clone setup).
+```yaml
+# .github/workflows/test.yml
+name: Test
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run test:unit
+      - run: npm run test:property
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: playwright-report, path: playwright-report/, retention-days: 7 }
+```
+
+That's the shape — one job, sequential, ~3 minutes total. Re-enabling is a one-file change plus a journal entry recording why.
 
 ## Quality bar
 
@@ -466,7 +495,7 @@ A test is **bad** if it:
 - **No snapshot tests for UI strings.** They drift, and the diff is noise.
 - **No coverage gates as a primary metric.** "100% coverage" with shallow tests is worse than 60% with sharp ones. Coverage is a smell-detector, not a goal.
 - **No tests for "did I render the right pixels."** That's a designer's job.
-- **No flaky tests retried in CI.** A test that needs `retry: 3` is broken; either fix it or delete it.
+- **No flaky tests, period.** A test that needs `retry: 3` is broken; either fix it or delete it. (Flakes-as-policy was a CI-era accommodation; we don't have CI, so we don't have that excuse.)
 
 ## Adding a new game — testing checklist
 
@@ -479,8 +508,7 @@ When adding a new game, copy this checklist into the game's PR description:
 - [ ] `tests/replay/<slug>.replay.test.js` (if game has RNG or sequence-sensitive scoring)
 - [ ] `tests/property/<slug>-<aspect>.property.test.js` (if game has invariants worth stating)
 - [ ] `window.__gameTest` hook in `main.js`, gated by `?test=1`
-- [ ] `npm test` is green locally
-- [ ] CI is green on the PR
+- [ ] `npm test` is green locally (the pre-push hook will catch a red test before it reaches the PR)
 ```
 
 ## Open questions / not yet decided
