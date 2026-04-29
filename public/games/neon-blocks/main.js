@@ -31,7 +31,10 @@ import {
   drawSplash, triggerLineClearFX, spawnLineClearParticles,
   updateFX, updateParticles, clearParticles, getShakeOffset,
   drawPerfectClearBanner,
+  splashHitTest,
 } from './render.js';
+
+import { W as CANVAS_W, H as CANVAS_H } from './config.js';
 
 // ---------------------------------------------------------------------------
 // Canvas setup
@@ -172,9 +175,20 @@ document.addEventListener('keydown', e => {
   }
 
   if (gameState === 'SPLASH') {
+    const modes = [MODE_MARATHON, MODE_SPRINT, MODE_DAILY];
     if (e.key === '1') { selectedMode = MODE_MARATHON; }
     else if (e.key === '2') { selectedMode = MODE_SPRINT; }
     else if (e.key === '3') { selectedMode = MODE_DAILY; }
+    else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+      e.preventDefault();
+      const i = modes.indexOf(selectedMode);
+      selectedMode = modes[(i - 1 + modes.length) % modes.length];
+    }
+    else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+      e.preventDefault();
+      const i = modes.indexOf(selectedMode);
+      selectedMode = modes[(i + 1) % modes.length];
+    }
     else if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
       startGame(selectedMode);
@@ -243,6 +257,25 @@ document.addEventListener('keydown', e => {
       gameState = 'SPLASH';
       audio.stopMusic();
       break;
+  }
+});
+
+canvas.addEventListener('pointerdown', e => {
+  audio.init();
+  audio.resume();
+
+  if (gameState !== 'SPLASH') return;
+
+  const rect = canvas.getBoundingClientRect();
+  const cx = ((e.clientX - rect.left) / rect.width)  * CANVAS_W;
+  const cy = ((e.clientY - rect.top)  / rect.height) * CANVAS_H;
+  const hit = splashHitTest(cx, cy);
+  if (hit) {
+    if (selectedMode === hit) {
+      startGame(selectedMode);
+    } else {
+      selectedMode = hit;
+    }
   }
 });
 

@@ -579,6 +579,26 @@ export function drawOverlay(ctx, lines) {
 
 // --- Splash screen ---
 
+// Splash card geometry (kept in module scope so click hit-tests can reuse it).
+const SPLASH_BTN_W = 140;
+const SPLASH_BTN_H = 34;
+const SPLASH_BTN_GAP = 8;
+const SPLASH_BTN_Y = 92;
+const SPLASH_MODES = ['marathon', 'sprint', 'daily'];
+
+export function splashHitTest(canvasX, canvasY) {
+  const totalW = SPLASH_MODES.length * SPLASH_BTN_W + (SPLASH_MODES.length - 1) * SPLASH_BTN_GAP;
+  let bx = W / 2 - totalW / 2;
+  for (const id of SPLASH_MODES) {
+    if (
+      canvasX >= bx && canvasX <= bx + SPLASH_BTN_W &&
+      canvasY >= SPLASH_BTN_Y && canvasY <= SPLASH_BTN_Y + SPLASH_BTN_H
+    ) return id;
+    bx += SPLASH_BTN_W + SPLASH_BTN_GAP;
+  }
+  return null;
+}
+
 export function drawSplash(ctx, { selectedMode, blinkOn, scores }) {
   drawBackground(ctx);
 
@@ -605,10 +625,10 @@ export function drawSplash(ctx, { selectedMode, blinkOn, scores }) {
     { id: 'daily',    label: '3  DAILY',    sub: todayLabel() + ' · daily seed' },
   ];
 
-  const btnW = 140, btnH = 34, btnGap = 8;
+  const btnW = SPLASH_BTN_W, btnH = SPLASH_BTN_H, btnGap = SPLASH_BTN_GAP;
   const totalW = modes.length * btnW + (modes.length - 1) * btnGap;
   let bx = W / 2 - totalW / 2;
-  const by = 92;
+  const by = SPLASH_BTN_Y;
 
   for (const m of modes) {
     const active = selectedMode === m.id;
@@ -646,8 +666,8 @@ export function drawSplash(ctx, { selectedMode, blinkOn, scores }) {
 
   ctx.font = `8px ${FONT_MONO}`;
   ctx.fillStyle = rgba(COLORS.hudDim, 0.8);
-  ctx.fillText('←→/AD move  ↑/X rotate CW  Z rotate CCW  ↓/S soft drop  Space hard drop', W / 2, 164);
-  ctx.fillText('Shift/C hold  P/Esc pause  R splash  M mute', W / 2, 176);
+  ctx.fillText('1/2/3 or ←→ pick mode · click to select · Space to start', W / 2, 164);
+  ctx.fillText('In-game: ←→/AD move  ↑/X rot CW  Z rot CCW  ↓/S soft  Space hard  Shift/C hold  P pause  R menu  M mute', W / 2, 176);
 
   // Scoreboard preview for selected mode.
   _drawSplashScores(ctx, selectedMode, scores);
