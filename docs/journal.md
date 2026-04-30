@@ -61,6 +61,46 @@ The journal records the decision; it doesn't substitute for the gate. If somethi
 
 ---
 
+## 2026-04-29 — [Bug] Neon Blocks `clearRows` corrupted multi-row clears
+
+**Context.** First per-game test backfill PR (`add-tests-neon-blocks`). While writing unit tests for `Board`, the dev agent flagged that the `clearRows` test it wrote could only assert single-row behavior — multi-row adjacency was producing surprising results. I empirically traced the case `clearRows([20, 21])` (a Double on the bottom rows) and confirmed: row 21 stayed full, the row above the cleared region didn't shift, and `fullRows()` immediately reported row 21 again — i.e. a phantom line clear would fire on the next lock.
+
+**Substance.** The original `clearRows` looped over the cleared row indices and, for each, did a "shift everything above down by 1" pass. The bug: after the first pass, the buffer no longer reflects the original positions, so the second pass operates on stale row indices and fails to clear the still-full content at the bottom. This fires on **every** Tetris (4 lines) and **every** multi-line clear — the user has been playing through this since v0.1 (2026-04-28).
+
+Why it wasn't visible: the phantom row gets re-detected by `fullRows()` on the very next lock and "clears itself" along with whatever the next piece adds, so the player sees a delayed extra line clear that looks like a free score bonus. The bug was masked by a second bug (the auto-re-clear) producing a roughly-believable end state.
+
+The fix is a single-pass compaction: walk the buffer bottom-up, copy non-cleared rows to a write pointer, fill the rest with empties. Correct for any combination of cleared rows (adjacent, non-adjacent, full Tetris). Verified with three new tests in `tests/unit/neon-blocks/board.test.js`:
+
+- adjacent Double (rows N, N-1) — content above shifts by exactly 2
+- Tetris (4 adjacent rows) — content above shifts by exactly 4
+- non-adjacent (rows N-2, N-4 with gap at N-1, N-3) — in-between content shifts by 1; below-both content unchanged; above shifts by 2
+
+**Action.** Fixed in `public/games/neon-blocks/board.js` in the same commit as the test that exposes it (per `docs/testing.md` § "When you fix a bug"). Changelog entry added to `docs/games/neon-blocks.md`. v0.3.
+
+This is the kind of thing the testing doctrine was written for. The bug was in the spec'd behavior the whole time — no test, no detection, no fix. First test pass through this game found it.
+
+---
+
+## 2026-04-29 — [Discovery] Dev server intercepts `/games/<slug>/` directory URLs
+
+**Context.** While writing E2E tests for neon-blocks, the dev agent found that `page.goto('/games/neon-blocks/?test=1')` returns the React shell, not the static game. The fix in `5aaf473` (Vercel `trailingSlash: true`) handles this in production, but the Vite dev server doesn't apply the same routing — React Router intercepts the directory URL.
+
+**Substance.** Workaround used: navigate to `/games/neon-blocks/index.html?test=1` instead. Works in dev. The production URL `/games/neon-blocks/` works via Vercel's static-file resolution.
+
+This is a real divergence: **E2E tests in dev test a URL the user never visits in prod, and don't test the URL the user actually visits.** A hard-drop test still asserts game behavior, so it's not invalid — but a "loading from the production URL works" test would pass in CI and fail in dev (or vice versa).
+
+Three options to converge:
+
+1. Run E2E against `vite build && vite preview` (production-equivalent serving). +30s wall-clock per E2E run.
+2. Add a Vite middleware that mirrors Vercel's directory→`index.html` resolution in dev.
+3. Accept the divergence; document the workaround.
+
+Going with option 3 for now — the cost of (1) is real (E2E budget is 30s; build+preview adds ~5s), and (2) is the kind of dev-shell tweak that adds maintenance for a single-game-folder case. If we ever ship a game whose prod URL meaningfully differs from `index.html`, revisit.
+
+**Action.** All neon-blocks E2E tests use the explicit `index.html?test=1` URL. Future per-game E2E tests will use the same pattern (codified in the per-game testing checklist when the second game gets backfilled).
+
+---
+
 ## 2026-04-29 — [Decision] Cloud CI deferred; local pre-push hook is the only mechanical gate
 
 **Context.** PR #2 originally included a `.github/workflows/test.yml` running the four-tier suite on every push and PR — exactly as specced in PR #1. While that PR was open, the user said: "do you have Github CI or Copilot code review enabled? if so, disable them & just run CI locally + remove Copilot code review since I'm out of tokens for it."
