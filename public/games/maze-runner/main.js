@@ -1178,3 +1178,24 @@ requestAnimationFrame(ts => {
   lastTime = ts;
   requestAnimationFrame(loop);
 });
+
+// ---------------------------------------------------------------------------
+// Test hook — only exposed when ?test=1 is present in the URL.
+// Read-only accessors return copies of internal state. This surface is the
+// contract for E2E tests; do not mutate state through it.
+// ---------------------------------------------------------------------------
+
+if (new URLSearchParams(location.search).has('test')) {
+  window.__gameTest = {
+    getState:    () => state,
+    getDiff:     () => diffIdx,
+    getSeed:     () => maze?.seed ?? null,
+    getMaze:     () => maze ? { cols: maze.cols, rows: maze.rows, cells: Array.from(maze.cells), seed: maze.seed, numericSeed: maze.numericSeed } : null,
+    getPlayer:   () => ({ col: player.col, row: player.row }),
+    getExit:     () => ({ col: exitCol, row: exitRow }),
+    getGems:     () => gems.map(g => ({ col: g.col, row: g.row, collected: g.collected })),
+    getElapsed:  () => elapsed,
+    getStartTs:  () => startTs,
+    getPromptActive: () => promptActive,
+  };
+}
