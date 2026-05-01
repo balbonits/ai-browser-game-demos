@@ -25,11 +25,29 @@ import {
   pickTower, drawBuildGhost,
 } from './towers.js';
 import {
-  resetProjectiles, updateProjectiles, drawProjectiles,
+  projectiles, resetProjectiles, updateProjectiles, drawProjectiles,
 } from './projectiles.js';
 import {
   startWave, resetWaves, updateWaves, isWaveActive, isWaveSpawningDone,
 } from './waves.js';
+
+// --- Test hook (gated by ?test=1) ---
+//
+// Read-only surface for E2E tests. Returns copies — never live references.
+// Add accessors here when tests need more game state.
+
+if (new URLSearchParams(location.search).has('test')) {
+  window.__gameTest = {
+    getState:       () => game.state,
+    getWave:        () => game.wave,
+    getMoney:       () => game.money,
+    getLives:       () => game.lives,
+    getTowers:      () => towers.map(t => ({ kind: t.key, level: t.level, col: t.col, row: t.row })),
+    getEnemies:     () => enemies.map(e => ({ kind: e.kind, hp: e.hp, x: e.x, y: e.y })),
+    getProjectiles: () => projectiles.map(p => ({ x: p.x, y: p.y })),
+    getBest:        () => Number(localStorage.getItem(STORAGE.BEST) || 0),
+  };
+}
 
 // --- Canvas + DOM ---
 
