@@ -1,0 +1,457 @@
+/* Idle Hoops RPG — shadcn-like dark aesthetic, vanilla CSS */
+
+:root {
+  --bg: hsl(240 10% 4%);
+  --card: hsl(240 6% 10%);
+  --border: hsl(240 4% 16%);
+  --muted: hsl(240 4% 46%);
+  --fg: hsl(0 0% 98%);
+  --accent: hsl(25 95% 53%);
+  --radius: 0.625rem;
+  --danger: hsl(0 72% 51%);
+  --win-color: hsl(142 71% 45%);
+  --loss-color: hsl(0 72% 51%);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- App layout ---- */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1rem 4rem;
+}
+
+/* ---- Cards ---- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* ---- Header ---- */
+
+.header {
+  padding: 1rem 0 0.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.header-top {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.team-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.record {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: var(--accent);
+}
+
+.header-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.badge {
+  background: var(--border);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.phase-pill {
+  background: var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* ---- Buttons ---- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--fg);
+}
+.btn-ghost:hover { background: var(--border); }
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { opacity: 0.9; }
+
+.btn.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.btn.danger:hover { background: var(--danger); color: #fff; }
+
+/* ---- Tab bar ---- */
+
+.tab-bar {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+  padding-bottom: 1px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.9rem;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn:hover { color: var(--fg); }
+.tab-btn.active {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+.tab-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ---- Section titles ---- */
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.sub-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0.75rem 0 0.4rem;
+}
+
+.muted-text { color: var(--muted); font-size: 0.85rem; }
+
+/* ---- Player cards ---- */
+
+.player-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.player-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.player-card:hover {
+  border-color: var(--accent);
+  background: hsl(240 6% 13%);
+}
+
+.player-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.player-emoji { font-size: 1.6rem; }
+.player-emoji-lg { font-size: 2.5rem; }
+
+.player-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.player-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-pos-pill {
+  background: var(--border);
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.7rem;
+  color: var(--muted);
+  display: inline-block;
+  margin-top: 0.1rem;
+}
+
+.player-level {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ---- XP bar ---- */
+
+.xp-bar-wrap {
+  height: 4px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 0.6rem;
+}
+.xp-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+/* ---- Stat badges ---- */
+
+.player-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.stat-badge {
+  background: var(--border);
+  border-radius: var(--radius);
+  padding: 0.1rem 0.4rem;
+  font-size: 0.72rem;
+  display: inline-flex;
+  gap: 0.25rem;
+}
+.stat-label { color: var(--muted); }
+.stat-val { font-weight: 700; }
+
+/* ---- Schedule ---- */
+
+.schedule-list { display: flex; flex-direction: column; gap: 0.35rem; }
+
+.game-row {
+  display: grid;
+  grid-template-columns: 4.5rem 1.8rem 4.5rem 1fr 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+}
+.game-row.win  { border-left: 3px solid var(--win-color); }
+.game-row.loss { border-left: 3px solid var(--loss-color); }
+.game-result { font-weight: 700; }
+.game-row.win  .game-result { color: var(--win-color); }
+.game-row.loss .game-result { color: var(--loss-color); }
+.game-day, .game-opp { color: var(--muted); }
+
+/* ---- Standings ---- */
+
+.standings-card .standings-record {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+.standings-detail { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.2rem; }
+.standings-detail.playoff { color: var(--accent); }
+
+/* ---- Off-season phases ---- */
+
+.offseason-phases {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.phase-step {
+  flex: 1;
+  text-align: center;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.phase-step.done {
+  background: hsl(142 40% 12%);
+  border-color: var(--win-color);
+  color: var(--win-color);
+}
+.phase-step.active {
+  background: hsl(25 40% 12%);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---- Settings ---- */
+
+.settings-section { margin-bottom: 0.75rem; }
+.settings-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+.seed-row { display: flex; align-items: center; gap: 0.5rem; }
+.seed-display {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  font-family: monospace;
+  color: var(--fg);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settings-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+
+.save-textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.6rem;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  resize: vertical;
+}
+
+.danger-zone { border-color: hsl(0 30% 20%); }
+
+.xp-section { margin-top: 0.5rem; }
+
+/* ---- Modals ---- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: hsl(240 10% 4% / 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.modal {
+  max-width: 420px;
+  width: 100%;
+  animation: fadeIn 0.15s ease;
+}
+
+.modal-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.modal-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+}
+
+.ring-line { color: var(--accent); font-weight: 700; }
+
+.modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  justify-content: flex-end;
+}
+
+.player-detail .player-header { margin-bottom: 0.75rem; }
+
+/* ---- Tab content spacing ---- */
+.tab-content { padding-bottom: 2rem; }
+
+/* ---- Animations ---- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 480px) {
+  .record { font-size: 1.5rem; }
+  .player-grid { grid-template-columns: 1fr 1fr; }
+  .game-row { grid-template-columns: 3.5rem 1.5rem 4rem 1fr; }
+  .game-top { display: none; }
+}
