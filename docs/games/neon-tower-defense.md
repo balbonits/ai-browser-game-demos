@@ -150,6 +150,39 @@ Boss waves still hit on every 4th index (16, 20, 24, …) as the cycle repeats. 
 - `neon-td:best` — highest wave reached.
 - `neon-td:muted` — audio mute preference.
 
+## Testing
+
+The game exposes a read-only debug hook on `window.__gameTest` when loaded with `?test=1` in the URL (`/games/neon-tower-defense/index.html?test=1`). In production the hook is absent — gated by the query-parameter check at the top of `main.js`.
+
+### Hook surface (`window.__gameTest`)
+
+| Accessor | Returns |
+| --- | --- |
+| `getState()` | Current state string: `'intro'` \| `'ready'` \| `'running'` \| `'paused'` \| `'won'` \| `'lost'` |
+| `getWave()` | Waves completed so far (number; 0 = none yet; increments on wave clear) |
+| `getMoney()` | Current credit balance (number) |
+| `getLives()` | Current lives remaining (number) |
+| `getTowers()` | Copy of placed towers as `{ kind, level, col, row }[]` |
+| `getEnemies()` | Copy of active enemies as `{ kind, hp, x, y }[]` |
+| `getProjectiles()` | Copy of in-flight projectiles as `{ x, y }[]` |
+| `getBest()` | Highest wave reached, from `localStorage['neon-td:best']` (number) |
+
+All accessors return copies, never live references. The hook is read-only.
+
+### Test files
+
+| Tier | File | What it covers |
+| --- | --- | --- |
+| Unit | `tests/unit/neon-tower-defense/config.test.js` | WAVES structure, TOWERS stats (cost/dmg/range/rate), ENEMIES stats (hp/speed/value/damage), STATE machine, STORAGE keys, grid constants |
+| Unit | `tests/unit/neon-tower-defense/map.test.js` | PATH_SEGMENTS, PATH_LEN, pointAt (clamping, determinism, boundary points), buildable grid shape, tileCenter, pickTile |
+| Unit | `tests/unit/neon-tower-defense/towers.test.js` | buildTower (placement, tile locking), sellTower (70% refund, tile release), upgradeTower (level advancement, invested cost), nextUpgradeCost, towerStats, resetTowers |
+| Unit | `tests/unit/neon-tower-defense/enemies.test.js` | spawnEnemy (defaults, multipliers), damage (fatal/non-fatal, guard), applySlow (strongest wins, duration extension), findFirstInRange (highest-progress priority, dead guard), findInAoe, updateEnemies (leak callback, removal) |
+| Unit | `tests/unit/neon-tower-defense/waves.test.js` | startWave, resetWaves, isWaveActive, isWaveSpawningDone, currentWaveIndex, isEndless, updateWaves (spawning, gap timing), endless multiplier math |
+| Replay | `tests/replay/neon-tower-defense.replay.test.js` | 1 Bolt L1 vs 3 squares, 360 frames (6s): kills=2, moneyEarned=12, enemiesLeft=1, totalHpLeft=30. Determinism verified. |
+| Property | `tests/property/neon-tower-defense-bounds.property.test.js` | Money never negative after any build/upgrade/sell sequence; lives bounded in [0, STARTING_LIVES]; sell refund === Math.round(invested × 0.7) |
+| Property | `tests/property/neon-tower-defense-targeting.property.test.js` | findFirstInRange returns null or an enemy within range; never returns dead/leaked; returns highest-progress enemy; findInAoe returns only in-radius live enemies |
+| E2E | `tests/e2e/neon-tower-defense.spec.ts` | Initial state (intro, money=120, lives=20), game start (Space/Enter/click), wave start (Space skips cooldown, auto-start), pause/unpause (P, Esc), mute persistence (neon-td:muted), test hook smoke tests |
+
 ## Known issues / deferred
 
 - No mobile-tuned layout. Touch *should* work via synthetic `click` events, but range previews on hover obviously won't.
@@ -160,5 +193,6 @@ Boss waves still hit on every 4th index (16, 20, 24, …) as the cycle repeats. 
 
 ## Changelog
 
+- `2026-05-01` — v0.3: test backfill. Unit tests (5 files: config, map, towers, enemies, waves), replay test (1 Bolt L1 vs 3 squares snapshot), property tests (bounds/lives/refund invariants, targeting invariants), E2E tests (23 tests: initial state, game start, wave start, pause, mute, hook smoke). Test hook `window.__gameTest` added to `main.js` behind `?test=1`. Also imports `projectiles` into `main.js` (was missing, needed for the hook).
 - `2026-04-25` — v0.1: initial playable build. Vanilla JS + Canvas2D, neon shape-based art (no sprites), Web Audio synth (no files), 12 hand-tuned waves with 3 boss waves, 3 tower types with 3 levels each, 4 enemy types, build/upgrade/sell economy, slow + AoE + pierce mechanics.
 - `2026-04-25` — v0.2: endless mode. After wave 12 the campaign dissolves into a score-attack: the 12 wave templates cycle and a per-wave multiplier scales HP / speed / spawn count / kill reward. The win screen is gone — only defeat ends a run. Wave label switches from `NN/12` to `NN ∞` and `localStorage[neon-td:best]` keeps tracking the highest wave reached.
