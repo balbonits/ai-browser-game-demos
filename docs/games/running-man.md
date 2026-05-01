@@ -123,6 +123,41 @@ Synthesized in `audio.js` (Web Audio API). Events:
 
 Mute is persisted per-game in `localStorage` (`running-man:muted`). Toggle via the 🔊 / 🔇 button in the HUD or the `M` key.
 
+## Testing
+
+The game exposes a read-only debug hook on `window.__gameTest` when loaded with `?test=1` in the URL (`/games/running-man/index.html?test=1`). In production (no `?test=1`) the hook is absent — it is gated by the query parameter check near the top of `main.js`.
+
+### Hook surface (`window.__gameTest`)
+
+| Accessor | Returns |
+| --- | --- |
+| `getState()` | Current game state string: `'intro'` \| `'running'` \| `'paused'` \| `'dying'` \| `'dead'` |
+| `getDistance()` | Current run distance in canvas pixels (number; divide by 10 for meters) |
+| `getBest()` | All-time best in meters from `localStorage['running-man:best']` (number) |
+| `getHero()` | `{ x, y, vy, onGround }` — copy of hero physics state |
+| `getSpeed()` | Current scroll speed in px/s (number; starts at 170, ramps to 380) |
+| `getObstacles()` | Array of `{ x, y, name }` for each active obstacle (copy, not live ref) |
+
+All accessors return copies or primitives. The hook is read-only; it cannot mutate game state.
+
+### Test files
+
+| Tier | File | What it covers |
+| --- | --- | --- |
+| Unit | `tests/unit/running-man/config.test.js` | Physics constants (GRAVITY > 0, JUMP_VY < 0), OBSTACLE_TYPES hit-rect containment, OBSTACLE_PATTERNS structure, STATE and STORAGE enums |
+| Unit | `tests/unit/running-man/hero.test.js` | In-test mirror of hero physics: ground state, jump initiation, mid-air vy integration, landing (y snap + vy reset), hitbox geometry |
+| Unit | `tests/unit/running-man/obstacles.test.js` | `aabb()` clear separation, touching edges, overlap, hero-vs-obstacle cases; pattern dx structural check |
+| Replay | `tests/replay/running-man.replay.test.js` | Degraded replay (Math.random not seedable): gap bounds at SPEED\_START/SPEED\_MAX, obstacle structure after 10 spawns, type diversity after 100 spawns, average gap decreases with speed |
+| Property | `tests/property/running-man-physics.property.test.js` | Hero y ≤ HERO\_GROUND\_Y - HERO\_H always; vy = 0 on landing; jump arc is finite; double-jump is impossible |
+| Property | `tests/property/running-man-obstacles.property.test.js` | Pattern dx within canvas width; scaled hit rect dimensions positive; `aabb` commutativity, reflexivity, separation invariants |
+| E2E | `tests/e2e/running-man.spec.ts` | Intro state on load, Space/ArrowUp/W start, distance increases, jump (onGround flips), P/Esc pause-resume, death → state transitions, localStorage best update, R/Space restart |
+
+### Notes
+
+- `hero.js` imports `assets.js` which uses `new Image()`. The hero unit and property tests use an in-test mirror of the physics functions (verbatim from `hero.js`) rather than importing the module directly. If the implementation diverges, the tests catch the drift.
+- `spawnObstacle()` uses unseeded `Math.random()`. The replay test is therefore degraded: it tests statistical bounds and structural shape rather than an exact snapshot. A proper deterministic replay would require dependency-injection of the RNG into `spawnObstacle`.
+- E2E death tests set no `forceDeath` hook; instead they let the hero run without jumping, which guarantees a collision within the first obstacle spawn window (~0.55–3.0s after game start).
+
 ## Known issues / deferred
 
 - Mobile touch works via `pointerdown` but the layout hasn't been tuned for phones.
