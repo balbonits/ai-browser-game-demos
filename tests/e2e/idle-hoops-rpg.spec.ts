@@ -113,10 +113,11 @@ test.describe('Idle Hoops RPG — E2E', () => {
     const state = await page.evaluate(() => (window as any).__gameTest.getState());
     expect(['playing', 'paused', 'offseason']).toContain(state);
 
-    // Record should be fresh (0-0 at start).
-    const record = await page.evaluate(() => (window as any).__gameTest.getRecord());
-    expect(record.wins).toBe(0);
-    expect(record.losses).toBe(0);
+    // Fresh start ⇒ seasonsPlayed === 0 (stable across the first few ticks,
+    // unlike record.wins/losses which can advance under TICK_MS=100 in test
+    // mode before we read).
+    const decoded = await page.evaluate(() => (window as any).__gameTest.getDecoded());
+    expect(decoded.team.seasonsPlayed).toBe(0);
   });
 
   test('save with wrong hash is rejected and game starts fresh', async ({ page }) => {
