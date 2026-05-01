@@ -151,6 +151,64 @@ Wave clears when the budget is exhausted AND the field is empty. After wave 8, t
 - **Performance unprofiled on low-end mobile/integrated graphics.** A handful of cubes + edges + sparks should be fine, but explicit perf passes haven't been done.
 - **No reload / ammo.** Infinite ammo with cooldown only. Could be added as a polish pass.
 
+## Testing
+
+The game exposes a read-only debug hook on `window.__gameTest` when loaded with `?test=1` in the URL (`/games/block-fps/index.html?test=1`). In production (no `?test=1`) the hook is absent — gated by the query parameter check at the bottom of `main.js`, after all game variables are initialized.
+
+### THREE bare-import resolution
+
+`config.js` uses `import * as THREE from 'three'` (a bare specifier) to construct `TMP_VEC` and `TMP_VEC2`. The browser resolves this via the `<script type="importmap">` in `index.html`. Node-side Vitest needs the same bare specifier resolved — solved by adding `three@0.170.0` as a devDependency in `package.json`. The game itself still loads THREE from the esm.sh CDN at runtime; the devDep is test-only scaffolding. This is the "Option 1 (preferred)" approach from the brief.
+
+### Hook surface (`window.__gameTest`)
+
+| Accessor | Returns |
+| --- | --- |
+| `getState()` | Current game state string: `'intro'` \| `'playing'` \| `'paused'` \| `'dead'` |
+| `getWave()` | Last completed wave index (0 = none yet) |
+| `getScore()` | Current score (number) |
+| `getHp()` | Current player HP (number; 100 at start) |
+| `getEnemies()` | Array of `{ kind, hp, pos: { x, y, z } }` copies for each alive enemy |
+| `getPlayer()` | `{ pos: { x, y, z }, vel: { x, y, z }, hp, alive }` — all plain numbers, no THREE refs |
+| `getBestWave()` | Best wave reached across all runs (`localStorage`) |
+| `getBestScore()` | Best score across all runs (`localStorage`) |
+
+All accessors return copies. THREE.Vector3 values are serialized to plain `{ x, y, z }` objects so Playwright's `evaluate()` can serialize them across the page boundary.
+
+### Test files
+
+| Tier | File | What it covers |
+| --- | --- | --- |
+| Unit | `tests/unit/block-fps/config.test.js` | ENEMIES table (hp/speed/score sanity), WAVES (count/spawnEvery/kinds validity, TOTAL_WAVES=8), endlessMultipliers, game constants |
+| Unit | `tests/unit/block-fps/enemies.test.js` | `damageEnemy`: HP reduction, overkill clamp-to-0, dead guard, per-kind shot counts |
+| Unit | `tests/unit/block-fps/gun.test.js` | Fire-rate gating formula (pure arithmetic), `getGunDamage`, `setFiring`/`isFiring` round-trip |
+| Unit | `tests/unit/block-fps/waves.test.js` | Wave state machine: `startWave`/`resetWaves`/`markWaveCleared` and all boolean accessor contracts |
+| Replay | `tests/replay/block-fps.replay.test.js` | Deterministic damage sequences: grunt (2 shots), charger (1 shot), heavy (4 shots); mixed-wave total (7 shots) |
+| Property | `tests/property/block-fps-damage.property.test.js` | HP never negative; `final hp == max(0, start - sum(damages))` for any sequence |
+| Property | `tests/property/block-fps-endless.property.test.js` | `endlessMultipliers(idx).hp >= 1` and `.count >= 1` for any idx; strictly increasing past TOTAL_WAVES |
+| E2E | `tests/e2e/block-fps.spec.ts` | Intro state on load, HP=100, wave=0, score=0, no alive enemies, player position, mute persistence, best-wave localStorage |
+
+### Skipped / deferred test coverage
+
+**Pointer-lock-dependent gameplay (E2E).** Playwright cannot simulate the user gesture required to acquire pointer lock in a headless browser context without `--enable-features` flags. Consequently:
+- The `intro → playing` state transition (requires pointer lock) is not E2E tested.
+- Wave spawn progression (requires playing state) is not E2E tested.
+- Kill counting and score accumulation are not E2E tested.
+
+These behaviors are covered indirectly by unit and replay tests (damage model, wave state machine). A full integration test would require either running Playwright with `--enable-features=PointerLockOptions` or refactoring the start trigger to not require pointer lock. Deferred.
+
+**Replay tier — limited scope.** The game uses `Math.random()` (unseeded) for enemy spawn positions, enemy kind selection, bullet spread, and spark trajectories. Full deterministic replay of the 3D game loop would require seeding Math.random and constructing a real THREE scene. Instead, the replay tier tests only the damage model (the one fully deterministic layer), which is sufficient to catch balance config regressions.
+
+**`updateEnemies`, `spawnEnemy`, `updateWaves`, `tryFire` (unit).** These functions require a THREE scene or call `Math.random()` in ways that make unit testing impractical without substantial test infrastructure. Their contracts are enforced by config unit tests + damage unit/property/replay tests at a lower level.
+
 ## Changelog
+
+- `2026-05-01` — v0.2 test backfill:
+  - **Test hook added** to `main.js` (gated by `?test=1`): `getState`, `getWave`, `getScore`, `getHp`, `getEnemies`, `getPlayer`, `getBestWave`, `getBestScore`.
+  - **`enemies` imported** in `main.js` (was missing from the import list; needed for the `getEnemies` hook).
+  - **`three` added** as a devDependency (`^0.170.0`) so Vitest resolves the bare `'three'` specifier in Node.
+  - **Unit tests added:** `config.test.js` (35 assertions), `enemies.test.js` (15 assertions), `gun.test.js` (12 assertions), `waves.test.js` (14 assertions).
+  - **Replay test added:** `block-fps.replay.test.js` (4 deterministic damage snapshots).
+  - **Property tests added:** `block-fps-damage.property.test.js` (2 invariants × 200 runs), `block-fps-endless.property.test.js` (4 invariants × 200 runs).
+  - **E2E tests added:** `block-fps.spec.ts` (13 tests: initial state, player state, mute persistence).
 
 - `2026-04-25` — v0.1: initial playable build. Three.js via esm.sh CDN, vanilla ES modules, no build step. Polygonal gun viewmodel, raycast hitscan firing, 3-enemy-type wave system (grunt/charger/heavy), 8 hand-tuned waves + endless mode with HP/count multipliers. PointerLock-based FPS controls (WASD + mouse-look). Web Audio synth (no audio files).
