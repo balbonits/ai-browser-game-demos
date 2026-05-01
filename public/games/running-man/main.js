@@ -9,6 +9,7 @@
 
 import {
   W, H, GROUND_Y,
+  HERO_X, HERO_H, HERO_GROUND_Y,
   SPEED_START, SPEED_MAX, SPEED_RAMP,
   STATE, STORAGE, HISTORY_STORE_MAX, HISTORY_RENDER_MAX,
 } from './config.js';
@@ -75,6 +76,21 @@ const game = {
   best: Number(localStorage.getItem(STORAGE.BEST) || 0),
   history: loadHistory(),
 };
+
+// --- Test hook (gated by ?test=1) ---
+// Read-only surface for E2E tests. Absent in production (no ?test=1).
+// All accessors return copies or primitives — tests cannot mutate game state.
+// Placed here so it has access to `game`, `hero`, and `obstacles`.
+if (new URLSearchParams(location.search).has('test')) {
+  window.__gameTest = {
+    getState:     () => game.state,
+    getDistance:  () => game.distance,
+    getBest:      () => Number(localStorage.getItem(STORAGE.BEST) || 0),
+    getHero:      () => ({ x: HERO_X, y: hero.y, vy: hero.vy, onGround: hero.y >= HERO_GROUND_Y - HERO_H - 0.5 }),
+    getSpeed:     () => game.speed,
+    getObstacles: () => obstacles.map((o) => ({ x: o.x, y: o.y, name: o.type?.name ?? o.name })),
+  };
+}
 
 function resetGame() {
   resetHero();
