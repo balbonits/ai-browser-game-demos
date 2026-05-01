@@ -75,20 +75,30 @@ export class Board {
   }
 
   // Clear specific rows and collapse the board downward.
+  //
+  // Single-pass compaction: walk bottom-up, copy non-cleared rows to the
+  // bottom, fill the top with empties. Correct for any combination of rows
+  // (adjacent, non-adjacent, all four for a Tetris). The previous repeated-
+  // shift implementation silently corrupted multi-row clears — see the
+  // 2026-04-29 [Bug] entry in docs/journal.md.
   clearRows(rows) {
-    // Sort descending so we remove from bottom upward.
-    const sorted = [...rows].sort((a, b) => b - a);
-    for (const r of sorted) {
-      // Shift rows above down.
-      for (let y = r; y > 0; y--) {
+    const toRemove = new Set(rows);
+    let writeRow = TOTAL_ROWS - 1;
+    for (let readRow = TOTAL_ROWS - 1; readRow >= 0; readRow--) {
+      if (toRemove.has(readRow)) continue;
+      if (writeRow !== readRow) {
         for (let c = 0; c < COLS; c++) {
-          this.cells[y * COLS + c] = this.cells[(y - 1) * COLS + c];
+          this.cells[writeRow * COLS + c] = this.cells[readRow * COLS + c];
         }
       }
-      // Clear topmost row.
+      writeRow--;
+    }
+    // Clear any remaining top rows that weren't written to.
+    while (writeRow >= 0) {
       for (let c = 0; c < COLS; c++) {
-        this.cells[c] = 0;
+        this.cells[writeRow * COLS + c] = 0;
       }
+      writeRow--;
     }
   }
 

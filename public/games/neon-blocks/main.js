@@ -37,6 +37,29 @@ import {
 import { W as CANVAS_W, H as CANVAS_H } from './config.js';
 
 // ---------------------------------------------------------------------------
+// Test hook (gated by ?test=1 — invisible in production)
+// ---------------------------------------------------------------------------
+
+// Declared here so the hook closure captures the live module bindings.
+// Each accessor is a function so it reads the *current* value, not a snapshot.
+// Returns copies (Array.from, slice) so the test cannot corrupt game state.
+if (new URLSearchParams(location.search).has('test')) {
+  window.__gameTest = {
+    getState: () => gameState,
+    getMode:  () => selectedMode,
+    getScore: () => score,
+    getLines: () => lines,
+    getLevel: () => level,
+    getBoard: () => board ? Array.from(board.cells) : null,
+    getPiece: () => piece ? { type: piece.type, rot: piece.rot, col: piece.col, row: piece.row } : null,
+    getNext:  () => nextPieces.slice(),
+    getHold:  () => holdType,
+    getCombo: () => combo,
+    getB2B:   () => b2b,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Canvas setup
 // ---------------------------------------------------------------------------
 

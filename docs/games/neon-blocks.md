@@ -149,7 +149,46 @@ Music fades on pause and fades back in on resume. Game-over plays a descending s
 - No "ARE" (appearance delay) between lock and spawn — pieces spawn immediately (matches modern guideline defaults).
 - Back-to-back T-spin mini is not separately flagged; it uses the same `isB2B` path as full T-spins. This is guideline-correct.
 
+## Testing
+
+The game exposes a read-only debug hook on `window.__gameTest` when loaded with `?test=1` in the URL (`/games/neon-blocks/index.html?test=1`). In production (no `?test=1`) the hook is absent — it is gated by the query parameter check at the top of `main.js`.
+
+### Hook surface (`window.__gameTest`)
+
+| Accessor | Returns |
+| --- | --- |
+| `getState()` | Current game state string: `'SPLASH'` \| `'PLAYING'` \| `'PAUSED'` \| `'GAME_OVER'` |
+| `getMode()` | Selected mode string: `'marathon'` \| `'sprint'` \| `'daily'` |
+| `getScore()` | Current score (number) |
+| `getLines()` | Lines cleared so far (number) |
+| `getLevel()` | Current level (number) |
+| `getBoard()` | Copy of board cells as `number[]` (length 220 = 10×22), or `null` if no board |
+| `getPiece()` | `{ type, rot, col, row }` of the active piece, or `null` |
+| `getNext()` | Copy of the 5-piece next queue as `number[]` |
+| `getHold()` | Hold piece type (number), or `null` |
+| `getCombo()` | Current combo count (number; -1 = no active combo) |
+| `getB2B()` | Back-to-back counter (number) |
+
+All accessors return copies (`Array.from`, `slice`), never live references. The hook is read-only; it cannot mutate game state.
+
+### Test files
+
+| Tier | File | What it covers |
+| --- | --- | --- |
+| Unit | `tests/unit/neon-blocks/config.test.js` | `gravityFrames`, scoring table lengths, O-piece rotation identity |
+| Unit | `tests/unit/neon-blocks/bag.test.js` | 7-bag distribution, determinism, `peek`, `djb2` hash stability |
+| Unit | `tests/unit/neon-blocks/board.test.js` | Fresh state, OOB sentinel, collision, lock, fullRows, clearRows, isAboveField |
+| Unit | `tests/unit/neon-blocks/piece.test.js` | Spawn position, minos offsets, moveH, moveDown, rotate, wall-kick, ghostRow, T-spin detection |
+| Replay | `tests/replay/neon-blocks.replay.test.js` | Board-state snapshot after seed=alpha + 4 hard drops; determinism; seed divergence |
+| Property | `tests/property/neon-blocks-bounds.property.test.js` | No mino ever goes out of horizontal or bottom bounds after any move sequence |
+| Property | `tests/property/neon-blocks-bag.property.test.js` | 7-pull and 14-pull distribution invariants over arbitrary seeds |
+| E2E | `tests/e2e/neon-blocks.spec.ts` | Splash mode cycling (arrow keys + number keys), game start, hard drop, pause/unpause, mute persistence |
+
 ## Changelog
+
+- `2026-04-29` — v0.3 test backfill + bug fix:
+  - **Test backfill:** unit (4 files: config, bag, board, piece), replay (1: board-state snapshot), property (2: bounds invariant, bag distribution), e2e (1: splash, gameplay, mute). Test hook on `window.__gameTest` gated by `?test=1`.
+  - **`Board.clearRows` fixed.** The original repeated-shift implementation silently corrupted multi-row clears — every Tetris and every Double/Triple. The phantom row was re-detected by `fullRows()` on the next lock, manifesting as a delayed bonus line clear that masked the bug. Replaced with a single-pass compaction. Surfaced by the new unit tests on the first pass through this game. See the `[Bug]` entry in `docs/journal.md` for the full trace.
 
 - `2026-04-28` — v0.2 fix-up pass:
   - **Lock delay corrected.** The reset-cap (15 moves) no longer force-locks instantly; the piece still gets the full remaining 500ms grace period after the cap is hit. Verified that soft-drop and airborne transitions do not incorrectly count toward the cap.
