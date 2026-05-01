@@ -59,4 +59,13 @@ export const GAMES: Game[] = [
       'Full-featured Tetris-style puzzle with SRS rotation, T-spins, hold, ghost piece, and layered synthesized music that grows with your level.',
     tags: ['Vanilla JS', 'Canvas2D', 'Web Audio'],
   },
+  {
+    slug: 'idle-hoops-rpg',
+    title: 'Idle Hoops RPG',
+    year: '2026',
+    kind: 'Idle / RPG',
+    description:
+      'Idle basketball career sim with single-string hashed save and offline catch-up.',
+    tags: ['Vanilla JS', 'DOM UI', 'localStorage', 'Idle'],
+  },
 ];
