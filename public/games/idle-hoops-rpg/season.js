@@ -79,9 +79,10 @@ export function xpForLevel(n) {
  * Apply game result XP to all players.
  * win: top scorer +200, other starters +100, bench +50.
  * loss: halved.
+ * xpMult scales all XP gains (default 1 — backward compat with 3-arg callers).
  * Mutates roster in place; returns list of {player, oldLevel, newLevel} level-up events.
  */
-export function applyXp(roster, gameResult, rng) {
+export function applyXp(roster, gameResult, rng, xpMult = 1) {
   const mult = gameResult.win ? 1 : 0.5;
   const levelUps = [];
 
@@ -89,11 +90,11 @@ export function applyXp(roster, gameResult, rng) {
     const player = roster[i];
     let xpGain;
     if (player.name === gameResult.topScorer) {
-      xpGain = Math.round(200 * mult);
+      xpGain = Math.round(200 * mult * xpMult);
     } else if (i < 5) {
-      xpGain = Math.round(100 * mult);
+      xpGain = Math.round(100 * mult * xpMult);
     } else {
-      xpGain = Math.round(50 * mult);
+      xpGain = Math.round(50 * mult * xpMult);
     }
     player.xp += xpGain;
 
@@ -136,17 +137,22 @@ function levelUpStat(player, rng) {
 
 /**
  * Age all players by one season.
- * After age 30, 25% chance per season to lose -1 athleticism.
+ * After age 30, base 25% chance per season to lose -1 athleticism.
+ * medicalLevel reduces that chance by 5% per level (capped at 0% at level 5+).
  * Retires players at age 40 (removes from roster, replaced by a fresh rookie).
  * Mutates roster in place.
+ * @param {Player[]} roster
+ * @param {object} rng
+ * @param {number} [medicalLevel=0] - medicalStaff upgrade level (0..10)
  */
-export function agePlayers(roster, rng) {
+export function agePlayers(roster, rng, medicalLevel = 0) {
+  const declineChance = Math.max(0, 0.25 - medicalLevel * 0.05);
   for (const player of roster) {
     player.age++;
     player.contractYears = Math.max(0, player.contractYears - 1);
     if (player.age > 30) {
-      // 25% chance of -1 athleticism per season.
-      if (rng.range(0, 3) === 0) {
+      // Decline chance reduced by medicalStaff upgrades (baseline 25%).
+      if (rng.next() < declineChance) {
         player.stats.athleticism = Math.max(1, player.stats.athleticism - 1);
       }
     }

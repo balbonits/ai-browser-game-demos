@@ -448,10 +448,193 @@ html, body {
   to   { opacity: 1; transform: scale(1); }
 }
 
+/* ---- Graphical stat bars (player cards v0.2) ---- */
+
+.player-stats-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-bar-row {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr 1.8rem;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.stat-bar-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+.stat-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+.stat-bar-val {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--fg);
+  text-align: right;
+}
+
+/* ---- Team boost pill (roster header) ---- */
+
+.team-boost-pill {
+  display: inline-flex;
+  align-items: center;
+  background: hsl(240 6% 14%);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+/* ---- Upgrade (Shop) tab ---- */
+
+.upgrade-card {
+  margin-bottom: 0.75rem;
+}
+
+.upgrade-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.upgrade-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.upgrade-level {
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.upgrade-effect {
+  font-size: 0.8rem;
+  color: var(--fg);
+  margin: 0.3rem 0 0.5rem;
+}
+
+.upgrade-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+.upgrade-cost {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.upgrade-buy {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.upgrade-buy:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---- Achievement grid ---- */
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.65rem;
+}
+
+.achievement-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+}
+
+.achievement-card.locked {
+  opacity: 0.45;
+  filter: grayscale(0.5);
+}
+
+.achievement-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+}
+
+.achievement-desc {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+
+.achievement-reward {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ---- Toast notifications ---- */
+
+.toast-container {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  z-index: 200;
+  pointer-events: none;
+  max-width: 320px;
+}
+
+.toast {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.83rem;
+  color: var(--fg);
+  box-shadow: 0 4px 16px hsl(0 0% 0% / 0.5);
+  animation: toastIn 0.2s ease;
+}
+
+.toast.info    { border-left: 3px solid var(--muted); }
+.toast.success { border-left: 3px solid var(--win-color); }
+.toast.gold    { border-left: 3px solid var(--accent); color: var(--accent); font-weight: 600; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(1.5rem); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 480px) {
   .record { font-size: 1.5rem; }
   .player-grid { grid-template-columns: 1fr 1fr; }
   .game-row { grid-template-columns: 3.5rem 1.5rem 4rem 1fr; }
   .game-top { display: none; }
+  .achievement-grid { grid-template-columns: 1fr 1fr; }
+  .toast-container { right: 0.5rem; bottom: 0.5rem; max-width: 90vw; }
 }

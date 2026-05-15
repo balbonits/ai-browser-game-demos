@@ -1,7 +1,11 @@
 // Replay test: fixed seed + N ticks = fixed final state.
 //
-// Snapshot values were captured on first green run (2026-05-01) from seed 'alpha', 200 ticks:
-//   wins=13, losses=15, money=4941263, roster[0].xp=1150, saveHash=4cbe8af0
+// Snapshot captured for v0.2 schema (date 2026-05-15).
+// v0.1 baseline (wins=13, losses=15, money=4941263, roster[0].xp=1150, hash=4cbe8af0)
+// is preserved in git history at commit fd6aaea.
+//
+// v0.2 snapshot (seed='alpha', 200 ticks, v2 state with career/upgrades/achievements):
+//   wins=11, losses=17, money=5167769, roster[0].xp=1955, saveHash=32be850a
 //
 // When a replay test breaks unexpectedly, it means game behavior changed.
 // Update the snapshot only when the spec intentionally changes.
@@ -12,6 +16,7 @@ import { generateRoster } from '../../public/games/idle-hoops-rpg/roster.js';
 import { freshSeason } from '../../public/games/idle-hoops-rpg/season.js';
 import { runTick } from '../../public/games/idle-hoops-rpg/sim.js';
 import { encodeSave } from '../../public/games/idle-hoops-rpg/save.js';
+import { defaultUpgrades } from '../../public/games/idle-hoops-rpg/upgrades.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -21,13 +26,16 @@ function makeState(seedStr) {
   const rng = makeRng(seedStr, 0);
   const roster = generateRoster(rng);
   return {
-    v: 1,
+    v: 2,
     seed: seedStr,
     rngCursor: rng.cursor,
     lastTickAt: 0,
     team: { name: 'Test Team', money: 1_000_000, fans: 10_000, rings: 0, seasonsPlayed: 0 },
     roster,
     season: freshSeason(),
+    career: { totalWins: 0, totalLosses: 0 },
+    upgrades: defaultUpgrades(),
+    achievements: [],
   };
 }
 
@@ -51,15 +59,15 @@ function saveHash(state) {
 // ---------------------------------------------------------------------------
 
 describe('Idle Hoops RPG replay', () => {
-  it("seed='alpha' + 200 ticks produces the expected snapshot", () => {
+  it("seed='alpha' + 200 ticks produces the expected v0.2 snapshot", () => {
     const state = runReplay('alpha', 200);
 
-    // Snapshot from first green run — locked in.
-    expect(state.season.wins).toBe(13);
-    expect(state.season.losses).toBe(15);
-    expect(state.team.money).toBe(4941263);
-    expect(state.roster[0].xp).toBe(1150);
-    expect(saveHash(state)).toBe('4cbe8af0');
+    // Snapshot captured for v0.2 schema — locked in.
+    expect(state.season.wins).toBe(11);
+    expect(state.season.losses).toBe(17);
+    expect(state.team.money).toBe(5167769);
+    expect(state.roster[0].xp).toBe(1955);
+    expect(saveHash(state)).toBe('32be850a');
   });
 
   it("seed='alpha' + 200 ticks is deterministic (same result twice)", () => {
@@ -79,5 +87,15 @@ describe('Idle Hoops RPG replay', () => {
     expect(state.team.money).toBeGreaterThanOrEqual(0);
     expect(state.season.wins + state.season.losses).toBeLessThanOrEqual(82);
     expect(state.roster).toHaveLength(8);
+  });
+
+  it("seed='alpha' + 200 ticks: state.achievements contains at least 'first_win'", () => {
+    const state = runReplay('alpha', 200);
+    expect(state.achievements).toContain('first_win');
+  });
+
+  it("seed='alpha' + 200 ticks: career.totalWins >= season.wins (career is a superset)", () => {
+    const state = runReplay('alpha', 200);
+    expect(state.career.totalWins).toBeGreaterThanOrEqual(state.season.wins);
   });
 });

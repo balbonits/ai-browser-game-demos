@@ -5,13 +5,15 @@
 // and hash = 8 hex chars from djb2(base64Payload).
 //
 // On decode: recompute hash, compare, reject mismatches.
-// On decode: verify v === 1, reject version mismatches.
+// On decode: accept v === 2 directly; migrate v === 1 via migrateV1ToV2.
+// Anything else → null (fresh start).
 
 import { djb2 } from './rng.js';
+import { defaultUpgrades } from './upgrades.js';
 
 export const SAVE_KEY = 'idle-hoops-rpg:save:v1';
 export const MUTE_KEY = 'idle-hoops-rpg:muted';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 /**
  * Compute 8-char lowercase hex from djb2 of a string.
@@ -47,8 +49,38 @@ export function encodeSave(state) {
 }
 
 /**
+ * Migrate a v1 SaveState to v2.
+ * Best-effort: derives career wins/losses from season + seasonsPlayed.
+ * @param {object} state - v1 SaveState
+ * @returns {object} - v2 SaveState
+ */
+export function migrateV1ToV2(state) {
+  // Best-effort career total: assume ~41 wins per past season (league-average).
+  // Current season wins/losses are accurate; past seasons are estimated.
+  const pastSeasons = state.team?.seasonsPlayed ?? 0;
+  const estimatedPastWins   = pastSeasons * 41;
+  const estimatedPastLosses = pastSeasons * 41;
+  const currentWins   = state.season?.wins   ?? 0;
+  const currentLosses = state.season?.losses ?? 0;
+
+  return {
+    ...state,
+    v: 2,
+    career: {
+      totalWins:   estimatedPastWins   + currentWins,
+      totalLosses: estimatedPastLosses + currentLosses,
+    },
+    upgrades: defaultUpgrades(),
+    achievements: [],
+  };
+}
+
+/**
  * Decode a save string back to a SaveState, or return null on failure.
- * Fails on: hash mismatch, version mismatch, JSON parse error.
+ * Fails on: hash mismatch, unknown version, JSON parse error.
+ * - v === 2 → accepted as-is
+ * - v === 1 → migrated to v2 via migrateV1ToV2
+ * - anything else → null
  * @param {string} str
  * @returns {object|null}
  */
@@ -61,8 +93,10 @@ export function decodeSave(str) {
     const expectedHash = hashPayload(payload);
     if (storedHash !== expectedHash) return null;
     const decoded = JSON.parse(fromBase64(payload));
-    if (!decoded || decoded.v !== SCHEMA_VERSION) return null;
-    return decoded;
+    if (!decoded) return null;
+    if (decoded.v === SCHEMA_VERSION) return decoded;           // v2 — use as-is
+    if (decoded.v === 1) return migrateV1ToV2(decoded);        // v1 — migrate
+    return null;                                               // unknown version
   } catch {
     return null;
   }

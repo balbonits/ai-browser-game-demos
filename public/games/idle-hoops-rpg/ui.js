@@ -1,6 +1,10 @@
 // DOM UI — single render(state) function that rebuilds from state.
 // Uses only vanilla DOM APIs; no frameworks.
 
+import { UPGRADES, MAX_UPGRADE_LEVEL, costFor } from './upgrades.js';
+import { ACHIEVEMENTS } from './achievements.js';
+import { computeMultipliers } from './multipliers.js';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -30,10 +34,23 @@ function xpBar(player) {
   );
 }
 
+// Stat badge — kept for player detail modal.
 function statBadge(label, value) {
   return el('span', { className: 'stat-badge' },
     el('span', { className: 'stat-label', textContent: label }),
     el('span', { className: 'stat-val', textContent: value }),
+  );
+}
+
+// Graphical stat bar row for player cards.
+function statBar(label, value) {
+  const pct = Math.round((value / 99) * 100);
+  return el('div', { className: 'stat-bar-row' },
+    el('span', { className: 'stat-bar-label', textContent: label }),
+    el('div', { className: 'stat-bar' },
+      el('div', { className: 'stat-bar-fill', style: `width:${pct}%` }),
+    ),
+    el('span', { className: 'stat-bar-val', textContent: value }),
   );
 }
 
@@ -55,7 +72,7 @@ let _playerDetailIdx = null;
 /**
  * Mount the UI into the given container element.
  * @param {HTMLElement} container
- * @param {object} callbacks - { onReset, onCopySettings, onImport, onPause }
+ * @param {object} callbacks - { onReset, onCopySettings, onImport, onPause, onBuyUpgrade }
  */
 export function mount(container, callbacks) {
   _callbacks = callbacks;
@@ -159,11 +176,13 @@ function fmtFans(n) {
 // ---------------------------------------------------------------------------
 
 const TABS = [
-  { id: 'roster',     label: 'Roster' },
-  { id: 'schedule',   label: 'Schedule' },
-  { id: 'standings',  label: 'Standings' },
-  { id: 'offseason',  label: 'Off-Season' },
-  { id: 'settings',   label: 'Settings' },
+  { id: 'roster',      label: 'Roster' },
+  { id: 'schedule',    label: 'Schedule' },
+  { id: 'standings',   label: 'Standings' },
+  { id: 'shop',        label: 'Shop' },
+  { id: 'achievements', label: 'Achievements' },
+  { id: 'offseason',   label: 'Off-Season' },
+  { id: 'settings',    label: 'Settings' },
 ];
 
 function renderTabs(state) {
@@ -188,20 +207,29 @@ function renderTabs(state) {
 
 function renderTabContent(state, opts) {
   switch (_activeTab) {
-    case 'roster':    return renderRoster(state);
-    case 'schedule':  return renderSchedule(state);
-    case 'standings': return renderStandings(state);
-    case 'offseason': return renderOffseason(state);
-    case 'settings':  return renderSettings(state, opts);
-    default:          return renderRoster(state);
+    case 'roster':       return renderRoster(state);
+    case 'schedule':     return renderSchedule(state);
+    case 'standings':    return renderStandings(state);
+    case 'shop':         return renderShop(state);
+    case 'achievements': return renderAchievements(state);
+    case 'offseason':    return renderOffseason(state);
+    case 'settings':     return renderSettings(state, opts);
+    default:             return renderRoster(state);
   }
 }
 
 // --- Roster tab ---
 
 function renderRoster(state) {
+  const mult = computeMultipliers(state);
+  const moneyX = mult.money.toFixed(2);
+  const xpX    = mult.xp.toFixed(2);
+
   return el('section', { className: 'tab-content' },
     el('h2', { className: 'section-title', textContent: 'Roster' }),
+    el('div', { className: 'team-boost-pill' },
+      `💰 ×${moneyX}  •  ⭐ ×${xpX}`,
+    ),
     el('div', { className: 'player-grid' },
       ...state.roster.map((p, i) => renderPlayerCard(p, i)),
     ),
@@ -209,9 +237,6 @@ function renderRoster(state) {
 }
 
 function renderPlayerCard(player, idx) {
-  const needed = 500 + player.level * 200;
-  const pct = Math.min(100, Math.round((player.xp / needed) * 100));
-
   return el('div', {
     className: 'player-card',
     onClick: () => { _playerDetailIdx = idx; render(_state, {}); },
@@ -225,11 +250,11 @@ function renderPlayerCard(player, idx) {
       el('div', { className: 'player-level', textContent: `Lv.${player.level}` }),
     ),
     xpBar(player),
-    el('div', { className: 'player-stats' },
-      statBadge('SHT', player.stats.shooting),
-      statBadge('DEF', player.stats.defense),
-      statBadge('ATH', player.stats.athleticism),
-      statBadge('IQ', player.stats.iq),
+    el('div', { className: 'player-stats player-stats-bars' },
+      statBar('SHT', player.stats.shooting),
+      statBar('DEF', player.stats.defense),
+      statBar('ATH', player.stats.athleticism),
+      statBar('IQ',  player.stats.iq),
     ),
   );
 }
@@ -239,7 +264,6 @@ function renderPlayerCard(player, idx) {
 function renderSchedule(state) {
   const schedule = state.season.schedule;
   const last5 = schedule.slice(-5).reverse();
-  const upcomingCount = 5;
 
   return el('section', { className: 'tab-content' },
     el('h2', { className: 'section-title', textContent: 'Schedule' }),
@@ -284,6 +308,11 @@ function renderStandings(state) {
             `Playoffs — Round ${s.playoff?.round ?? 1} | Series: ${s.playoff?.seriesWins}-${s.playoff?.seriesLosses}`,
           )
         : null,
+      state.career
+        ? el('div', { className: 'standings-detail' },
+            `Career: ${state.career.totalWins}W - ${state.career.totalLosses}L`,
+          )
+        : null,
     ),
     rings > 0
       ? el('div', { className: 'card' },
@@ -291,6 +320,75 @@ function renderStandings(state) {
           el('p', { textContent: `🏆 x${rings} Championship${rings > 1 ? 's' : ''} won!` }),
         )
       : el('p', { className: 'muted-text', textContent: 'No rings yet. Keep grinding.' }),
+  );
+}
+
+// --- Shop tab ---
+
+function renderShop(state) {
+  const upgrades = state.upgrades ?? {};
+  const money = state.team.money;
+
+  return el('section', { className: 'tab-content' },
+    el('h2', { className: 'section-title', textContent: 'Upgrades' }),
+    el('p', { className: 'muted-text', style: 'margin-bottom: 1rem;',
+      textContent: 'Money buys permanent multipliers. Each upgrade caps at level 10.' }),
+    ...UPGRADES.map(upg => {
+      const level = upgrades[upg.id] ?? 0;
+      const atCap = level >= MAX_UPGRADE_LEVEL;
+      const cost = costFor(upg.id, level);
+      const canBuy = !atCap && money >= cost;
+
+      return el('div', { className: 'upgrade-card card' },
+        el('div', { className: 'upgrade-header' },
+          el('span', { className: 'upgrade-name', textContent: upg.name }),
+          el('span', { className: 'upgrade-level', textContent: `Lv. ${level} / ${MAX_UPGRADE_LEVEL}` }),
+        ),
+        el('p', { className: 'muted-text', textContent: upg.description }),
+        el('p', { className: 'upgrade-effect', textContent: upg.effectText }),
+        el('div', { className: 'upgrade-footer' },
+          el('span', { className: 'upgrade-cost',
+            textContent: atCap ? 'MAXED' : `Cost: $${fmtMoney(cost)}` }),
+          el('button', {
+            className: 'btn btn-primary upgrade-buy',
+            textContent: atCap ? 'MAX' : 'Buy',
+            disabled: (!canBuy || atCap) ? 'disabled' : undefined,
+            onClick: () => _callbacks.onBuyUpgrade?.(upg.id),
+          }),
+        ),
+      );
+    }),
+  );
+}
+
+// --- Achievements tab ---
+
+function renderAchievements(state) {
+  const unlocked = new Set(state.achievements ?? []);
+
+  return el('section', { className: 'tab-content' },
+    el('h2', { className: 'section-title', textContent: 'Achievements' }),
+    el('p', { className: 'muted-text', style: 'margin-bottom: 1rem;',
+      textContent: `${unlocked.size} / ${ACHIEVEMENTS.length} unlocked` }),
+    el('div', { className: 'achievement-grid' },
+      ...ACHIEVEMENTS.map(ach => {
+        const isUnlocked = unlocked.has(ach.id);
+        const rewardParts = [];
+        if (ach.reward.money) rewardParts.push(`+${Math.round(ach.reward.money * 100)}% 💰`);
+        if (ach.reward.xp)    rewardParts.push(`+${Math.round(ach.reward.xp    * 100)}% ⭐`);
+        const rewardStr = rewardParts.join('  ');
+
+        return el('div', {
+          className: `achievement-card${isUnlocked ? '' : ' locked'}`,
+        },
+          el('div', { className: 'achievement-name' }, isUnlocked ? '🏆 ' : '🔒 ', ach.name),
+          el('div', { className: 'achievement-desc', textContent: ach.description }),
+          rewardStr
+            ? el('div', { className: 'achievement-reward', textContent: rewardStr })
+            : null,
+        );
+      }),
+    ),
   );
 }
 

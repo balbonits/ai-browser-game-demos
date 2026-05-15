@@ -13,6 +13,10 @@ import { generateRoster } from './roster.js';
 import { freshSeason } from './season.js';
 import { runTick } from './sim.js';
 import { mount, render, showWelcomeBack } from './ui.js';
+import { UPGRADES, defaultUpgrades, applyPurchase } from './upgrades.js';
+import { ACHIEVEMENTS } from './achievements.js';
+import { computeMultipliers } from './multipliers.js';
+import { enqueueToast, getToasts, clearToasts, renderToasts, suppressToasts } from './toasts.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -33,6 +37,7 @@ let state = null;   // SaveState
 let rng = null;     // makeRng instance — shared cursor
 let paused = false;
 let tickIntervalId = null;
+let toastContainer = null;
 
 // ---------------------------------------------------------------------------
 // State creation
@@ -42,7 +47,7 @@ function newState(seedStr) {
   const r = makeRng(seedStr, 0);
   const roster = generateRoster(r);
   const s = {
-    v: 1,
+    v: 2,
     seed: seedStr,
     rngCursor: r.cursor,
     lastTickAt: Date.now(),
@@ -55,6 +60,9 @@ function newState(seedStr) {
     },
     roster,
     season: freshSeason(),
+    career: { totalWins: 0, totalLosses: 0 },
+    upgrades: defaultUpgrades(),
+    achievements: [],
   };
   return s;
 }
@@ -68,6 +76,19 @@ function freshSeed() {
 }
 
 // ---------------------------------------------------------------------------
+// Toast container setup
+// ---------------------------------------------------------------------------
+
+function ensureToastContainer() {
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container';
+    document.body.appendChild(toastContainer);
+  }
+  return toastContainer;
+}
+
+// ---------------------------------------------------------------------------
 // Tick execution
 // ---------------------------------------------------------------------------
 
@@ -78,7 +99,27 @@ function doTick() {
   state.rngCursor = rng.cursor;
   state.lastTickAt = Date.now();
   persistSave(state);
+
+  // Enqueue toasts for notable events.
+  if (event) {
+    if (event.levelUps && event.levelUps.length > 0) {
+      for (const lu of event.levelUps) {
+        enqueueToast(`${lu.name} reached Lv.${lu.newLevel}!`, 'success');
+      }
+    }
+    if (event.newAchievements && event.newAchievements.length > 0) {
+      for (const id of event.newAchievements) {
+        const ach = ACHIEVEMENTS.find(a => a.id === id);
+        if (ach) enqueueToast(`🏆 Achievement: ${ach.name}`, 'gold');
+      }
+    }
+    if (event.ringWon) {
+      enqueueToast('🏆 CHAMPIONSHIP WON!', 'gold');
+    }
+  }
+
   rerender();
+  renderToasts(ensureToastContainer());
   return event;
 }
 
@@ -88,6 +129,20 @@ function rerender() {
     tickMs: TICK_MS,
     saveString: encodeSave(state),
   });
+}
+
+// ---------------------------------------------------------------------------
+// Upgrade purchase handler
+// ---------------------------------------------------------------------------
+
+function onBuyUpgrade(id) {
+  if (!state) return false;
+  const purchased = applyPurchase(state, id);
+  if (purchased) {
+    persistSave(state);
+    rerender();
+  }
+  return purchased;
 }
 
 // ---------------------------------------------------------------------------
@@ -127,12 +182,15 @@ function boot() {
       const beforeRings = state.team.rings;
       let levelUpCount = 0;
 
+      suppressToasts(true);
       for (let i = 0; i < due; i++) {
         rng = makeRng(state.seed, state.rngCursor);
         const ev = runTick(state, rng);
         state.rngCursor = rng.cursor;
         if (ev.levelUps) levelUpCount += ev.levelUps.length;
       }
+      suppressToasts(false);
+
       state.lastTickAt = Date.now();
       persistSave(state);
 
@@ -172,9 +230,11 @@ function boot() {
         }
       }
     },
+    onBuyUpgrade,
   });
 
   rerender();
+  renderToasts(ensureToastContainer());
 
   // Start tick interval.
   tickIntervalId = setInterval(doTick, TICK_MS);
@@ -218,6 +278,12 @@ if (IS_TEST) {
       return ss ? decodeSave(ss) : null;
     },
 
+    // v0.2 accessors.
+    getUpgrades:     () => JSON.parse(JSON.stringify(state?.upgrades ?? {})),
+    getAchievements: () => JSON.parse(JSON.stringify(state?.achievements ?? [])),
+    getMultipliers:  () => state ? computeMultipliers(state) : { money: 1, xp: 1 },
+    getToasts:       () => getToasts(),
+
     // TEST ONLY mutators.
     triggerTick: (n = 1) => {
       for (let i = 0; i < n; i++) doTick();
@@ -238,6 +304,23 @@ if (IS_TEST) {
     },
     clearSave: () => {
       wipeSave();
+    },
+
+    // v0.2 mutators.
+    buyUpgrade: (id) => onBuyUpgrade(id),
+    grantMoney: (n) => {
+      if (!state) return;
+      state.team.money += n;
+      persistSave(state);
+      rerender();
+    },
+    forceAchievement: (id) => {
+      if (!state) return;
+      if (!state.achievements.includes(id)) {
+        state.achievements.push(id);
+      }
+      persistSave(state);
+      rerender();
     },
   };
 }
