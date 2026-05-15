@@ -56,7 +56,7 @@ export const GAMES: Game[] = [
     year: '2026',
     kind: 'Falling-block puzzle',
     description:
-      'Full-featured Tetris-style puzzle with SRS rotation, T-spins, hold, ghost piece, and layered synthesized music that grows with your level.',
+      'Modern falling-block puzzle with SRS rotation, T-spins, hold, ghost piece, and layered synthesized music that grows with your level.',
     tags: ['Vanilla JS', 'Canvas2D', 'Web Audio'],
   },
   {

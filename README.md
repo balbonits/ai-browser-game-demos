@@ -10,10 +10,12 @@ The goal of this repo is to explore what modern AI tooling can produce end-to-en
 
 | Slug | Genre | Stack |
 | --- | --- | --- |
-| [`running-man`](games/running-man/) | Side-scrolling auto-runner | Vanilla JS · Canvas2D · PixelLab · Web Audio |
-| [`neon-tower-defense`](games/neon-tower-defense/) | Shape-based tower defense | Vanilla JS · Canvas2D · Web Audio |
-| [`block-fps`](games/block-fps/) | First-person shooter | Three.js (CDN) · WebGL · Web Audio |
-| [`maze-runner`](games/maze-runner/) | Procedurally generated maze | Vanilla JS · Canvas2D · Web Audio |
+| [`running-man`](public/games/running-man/) | Side-scrolling auto-runner | Vanilla JS · Canvas2D · PixelLab · Web Audio |
+| [`neon-tower-defense`](public/games/neon-tower-defense/) | Shape-based tower defense | Vanilla JS · Canvas2D · Web Audio |
+| [`block-fps`](public/games/block-fps/) | First-person shooter | Three.js (CDN) · WebGL · Web Audio |
+| [`maze-runner`](public/games/maze-runner/) | Procedurally generated maze | Vanilla JS · Canvas2D · Web Audio |
+| [`neon-blocks`](public/games/neon-blocks/) | Falling-block puzzle | Vanilla JS · Canvas2D · Web Audio |
+| [`idle-hoops-rpg`](public/games/idle-hoops-rpg/) | Idle / RPG | Vanilla JS · DOM UI · localStorage |
 
 Per-game notes (design, controls, asset inventory, changelog) live in [`docs/games/`](docs/games/).
 
