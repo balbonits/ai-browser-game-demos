@@ -3,6 +3,11 @@ import { test, expect } from '@playwright/test';
 const URL = '/games/idle-hoops-rpg/index.html?test=1';
 const SAVE_KEY = 'idle-hoops-rpg:save:v1';
 
+// A valid v1 save string (seed='migration-test', money=500_000, 0 wins, v:1 schema).
+// Constructed once from the v0.1 encodeSave logic; used for migration E2E test.
+const V1_SAVE_STRING =
+  '4740a2e3:eyJ2IjoxLCJzZWVkIjoibWlncmF0aW9uLXRlc3QiLCJybmdDdXJzb3IiOjAsImxhc3RUaWNrQXQiOjE3MDAwMDAwMDAwMDAsInRlYW0iOnsibmFtZSI6Ik9sZCBUZWFtIiwibW9uZXkiOjUwMDAwMCwiZmFucyI6NTAwMCwicmluZ3MiOjAsInNlYXNvbnNQbGF5ZWQiOjB9LCJyb3N0ZXIiOltdLCJzZWFzb24iOnsiZGF5IjowLCJ3aW5zIjowLCJsb3NzZXMiOjAsInNjaGVkdWxlIjpbXSwicGhhc2UiOiJyZWd1bGFyIiwicGxheW9mZiI6bnVsbH19';
+
 // Wait for __gameTest to be available (game booted).
 async function waitForGame(page: import('@playwright/test').Page) {
   await page.waitForFunction(() => Boolean((window as any).__gameTest));
@@ -205,10 +210,10 @@ test.describe('Idle Hoops RPG — E2E', () => {
     expect(ss).toMatch(/^[0-9a-f]{8}:.+$/);
   });
 
-  test('getDecoded returns an object with the correct schema version', async ({ page }) => {
+  test('getDecoded returns an object with the correct schema version (v2)', async ({ page }) => {
     const decoded = await page.evaluate(() => (window as any).__gameTest.getDecoded());
     expect(decoded).not.toBeNull();
-    expect(decoded.v).toBe(1);
+    expect(decoded.v).toBe(2);
     expect(typeof decoded.seed).toBe('string');
     expect(Array.isArray(decoded.roster)).toBe(true);
   });
@@ -220,5 +225,153 @@ test.describe('Idle Hoops RPG — E2E', () => {
   test('getRoster always returns 8 players', async ({ page }) => {
     const roster = await page.evaluate(() => (window as any).__gameTest.getRoster());
     expect(roster).toHaveLength(8);
+  });
+
+  // ---------------------------------------------------------------------------
+  // buyUpgrade flow (v0.2)
+  // ---------------------------------------------------------------------------
+
+  test('buyUpgrade returns true and deducts the correct cost', async ({ page }) => {
+    // Grant enough money to afford trainingFacility level 0 -> 1 (cost: 100_000).
+    await page.evaluate(() => (window as any).__gameTest.grantMoney(1_000_000));
+    const moneyBefore = await page.evaluate(() => (window as any).__gameTest.getMoney());
+
+    const result = await page.evaluate(() => (window as any).__gameTest.buyUpgrade('trainingFacility'));
+    expect(result).toBe(true);
+
+    const upgrades = await page.evaluate(() => (window as any).__gameTest.getUpgrades());
+    expect(upgrades.trainingFacility).toBe(1);
+
+    const moneyAfter = await page.evaluate(() => (window as any).__gameTest.getMoney());
+    // Cost for level 0: Math.round(100_000 * 1^1.5) = 100_000
+    expect(moneyBefore - moneyAfter).toBe(100_000);
+  });
+
+  test('buyUpgrade rejects at level cap (10 purchases = cap)', async ({ page }) => {
+    // Grant enormous money so we can buy to cap.
+    await page.evaluate(() => (window as any).__gameTest.grantMoney(999_999_999));
+
+    // Buy trainingFacility 10 times to hit the cap.
+    for (let i = 0; i < 10; i++) {
+      await page.evaluate(() => (window as any).__gameTest.buyUpgrade('trainingFacility'));
+    }
+
+    const upgrades = await page.evaluate(() => (window as any).__gameTest.getUpgrades());
+    expect(upgrades.trainingFacility).toBe(10);
+
+    // 11th purchase must fail.
+    const result = await page.evaluate(() => (window as any).__gameTest.buyUpgrade('trainingFacility'));
+    expect(result).toBe(false);
+
+    // Level stays at 10.
+    const upgradesAfter = await page.evaluate(() => (window as any).__gameTest.getUpgrades());
+    expect(upgradesAfter.trainingFacility).toBe(10);
+  });
+
+  test('buyUpgrade returns false when money is insufficient', async ({ page }) => {
+    // Start fresh with a known seed so money is the default 1_000_000.
+    // Drain money to 0 by using forceSeed and then manually setting money via grantMoney with a negative.
+    // Easiest: forceSeed gives 1_000_000; trainingFacility lv0 costs 100_000.
+    // Force a state with nearly no money by using grantMoney(-1_000_000) (which brings money to ~0).
+    await page.evaluate(() => (window as any).__gameTest.forceSeed('broke-test'));
+    await page.evaluate(() => (window as any).__gameTest.grantMoney(-999_999));
+    // money should now be ~1 (1_000_000 - 999_999 = 1)
+    const money = await page.evaluate(() => (window as any).__gameTest.getMoney());
+    expect(money).toBeLessThan(100_000);
+
+    const result = await page.evaluate(() => (window as any).__gameTest.buyUpgrade('trainingFacility'));
+    expect(result).toBe(false);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Achievement unlock + multipliers (v0.2)
+  // ---------------------------------------------------------------------------
+
+  test('forceAchievement unlocks an achievement and reflects in getAchievements', async ({ page }) => {
+    await page.evaluate(() => (window as any).__gameTest.forceAchievement('first_win'));
+
+    const achievements = await page.evaluate(() => (window as any).__gameTest.getAchievements());
+    expect(achievements).toContain('first_win');
+  });
+
+  test('forceAchievement reflects in getMultipliers (first_win = +5% money)', async ({ page }) => {
+    await page.evaluate(() => (window as any).__gameTest.forceAchievement('first_win'));
+
+    const multipliers = await page.evaluate(() => (window as any).__gameTest.getMultipliers());
+    // first_win adds 0.05 money; base is 1.0 -> should be 1.05
+    expect(multipliers.money).toBeCloseTo(1.05, 5);
+  });
+
+  test('forceAchievement is idempotent (no duplicate in achievements array)', async ({ page }) => {
+    await page.evaluate(() => (window as any).__gameTest.forceAchievement('first_win'));
+    await page.evaluate(() => (window as any).__gameTest.forceAchievement('first_win'));
+
+    const achievements = await page.evaluate(() => (window as any).__gameTest.getAchievements());
+    const count = achievements.filter((id: string) => id === 'first_win').length;
+    expect(count).toBe(1);
+  });
+
+  // ---------------------------------------------------------------------------
+  // v1 save migrates on load (v0.2)
+  // ---------------------------------------------------------------------------
+
+  test('v1 save migrates to v2 on load: decoded state has v===2', async ({ page }) => {
+    // Write the hard-coded v1 save string to localStorage before loading.
+    await page.evaluate((args) => {
+      localStorage.setItem(args.key, args.save);
+    }, { key: SAVE_KEY, save: V1_SAVE_STRING });
+
+    // Reload — boot should detect v1, migrate, and start normally.
+    await page.reload();
+    await waitForGame(page);
+
+    // Verify state has v: 2.
+    const decoded = await page.evaluate(() => (window as any).__gameTest.getDecoded());
+    expect(decoded).not.toBeNull();
+    expect(decoded.v).toBe(2);
+  });
+
+  test('v1 save migrates to v2: migrated state has career, upgrades, achievements', async ({ page }) => {
+    await page.evaluate((args) => {
+      localStorage.setItem(args.key, args.save);
+    }, { key: SAVE_KEY, save: V1_SAVE_STRING });
+
+    await page.reload();
+    await waitForGame(page);
+
+    const decoded = await page.evaluate(() => (window as any).__gameTest.getDecoded());
+    expect(decoded).not.toBeNull();
+    expect(decoded.career).toBeDefined();
+    expect(typeof decoded.career.totalWins).toBe('number');
+    expect(decoded.upgrades).toBeDefined();
+    expect(Array.isArray(decoded.achievements)).toBe(true);
+  });
+
+  test('v1 save migrates to v2: original seed and money are preserved', async ({ page }) => {
+    await page.evaluate((args) => {
+      localStorage.setItem(args.key, args.save);
+    }, { key: SAVE_KEY, save: V1_SAVE_STRING });
+
+    await page.reload();
+    await waitForGame(page);
+
+    // The v1 state had seed='migration-test' and money=500_000.
+    const seed = await page.evaluate(() => (window as any).__gameTest.getSeed());
+    expect(seed).toBe('migration-test');
+
+    const decoded = await page.evaluate(() => (window as any).__gameTest.getDecoded());
+    expect(decoded.team.money).toBe(500_000);
+  });
+
+  test('v1 save load does not crash the game', async ({ page }) => {
+    await page.evaluate((args) => {
+      localStorage.setItem(args.key, args.save);
+    }, { key: SAVE_KEY, save: V1_SAVE_STRING });
+
+    await page.reload();
+    await waitForGame(page);
+
+    const state = await page.evaluate(() => (window as any).__gameTest.getState());
+    expect(['playing', 'paused', 'offseason']).toContain(state);
   });
 });

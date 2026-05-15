@@ -1,11 +1,11 @@
-// Property test: for any valid SaveState, encodeSave -> decodeSave preserves equality.
+// Property test: for any valid SaveState (v2 schema), encodeSave -> decodeSave preserves equality.
 
 import { describe, it } from 'vitest';
 import fc from 'fast-check';
 import { encodeSave, decodeSave } from '../../public/games/idle-hoops-rpg/save.js';
 
 // ---------------------------------------------------------------------------
-// fast-check arbitraries for SaveState shape
+// fast-check arbitraries for SaveState shape (v2)
 // ---------------------------------------------------------------------------
 
 const arbStats = fc.record({
@@ -71,22 +71,47 @@ const arbTeam = fc.record({
 
 const arbSeed = fc.string({ minLength: 1, maxLength: 30 });
 
+// v0.2 additions
+const arbCareer = fc.record({
+  totalWins:   fc.integer({ min: 0, max: 5000 }),
+  totalLosses: fc.integer({ min: 0, max: 5000 }),
+});
+
+const arbUpgrades = fc.record({
+  trainingFacility: fc.integer({ min: 0, max: 10 }),
+  scouting:         fc.integer({ min: 0, max: 10 }),
+  gymEquipment:     fc.integer({ min: 0, max: 10 }),
+  medicalStaff:     fc.integer({ min: 0, max: 10 }),
+  marketing:        fc.integer({ min: 0, max: 10 }),
+});
+
+const ALL_ACHIEVEMENT_IDS = [
+  'first_win', 'first_ring', 'dynasty_5', 'wins_10', 'wins_100', 'wins_500',
+  'playoff_bound', 'filthy_rich', 'sellout_crowd', 'veteran_squad', 'hall_of_fame', 'long_career',
+];
+
+const arbAchievements = fc.subarray(ALL_ACHIEVEMENT_IDS);
+
+// v2 SaveState arbitrary
 const arbSaveState = fc.record({
-  v:          fc.constant(1),
-  seed:       arbSeed,
-  rngCursor:  fc.integer({ min: 0, max: 100_000 }),
-  lastTickAt: fc.integer({ min: 0, max: 2_000_000_000_000 }),
-  team:       arbTeam,
-  roster:     fc.array(arbPlayer, { minLength: 0, maxLength: 8 }),
-  season:     arbSeason,
+  v:           fc.constant(2),
+  seed:        arbSeed,
+  rngCursor:   fc.integer({ min: 0, max: 100_000 }),
+  lastTickAt:  fc.integer({ min: 0, max: 2_000_000_000_000 }),
+  team:        arbTeam,
+  roster:      fc.array(arbPlayer, { minLength: 0, maxLength: 8 }),
+  season:      arbSeason,
+  career:      arbCareer,
+  upgrades:    arbUpgrades,
+  achievements: arbAchievements,
 });
 
 // ---------------------------------------------------------------------------
-// Property: encode -> decode is an identity
+// Property: encode -> decode is an identity (v2 states round-trip exactly)
 // ---------------------------------------------------------------------------
 
 describe('save roundtrip — property', () => {
-  it('for any valid SaveState, decodeSave(encodeSave(state)) deep-equals state', () => {
+  it('for any valid SaveState (v2), decodeSave(encodeSave(state)) deep-equals state', () => {
     fc.assert(
       fc.property(arbSaveState, (state) => {
         const encoded = encodeSave(state);
