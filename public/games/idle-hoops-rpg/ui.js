@@ -12,6 +12,10 @@ import { computeMultipliers } from './multipliers.js';
 function el(tag, attrs = {}, ...children) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
+    // Skip undefined/null/false attribute values — setAttribute would stringify
+    // undefined to "undefined", which applied to e.g. `disabled` silently
+    // disables the element while leaving it visually normal.
+    if (v === undefined || v === null || v === false) continue;
     if (k === 'className') e.className = v;
     else if (k === 'textContent') e.textContent = v;
     else if (k === 'innerHTML') e.innerHTML = v;
