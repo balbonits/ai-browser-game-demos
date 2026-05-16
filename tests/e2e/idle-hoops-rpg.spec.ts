@@ -374,4 +374,49 @@ test.describe('Idle Hoops RPG — E2E', () => {
     const state = await page.evaluate(() => (window as any).__gameTest.getState());
     expect(['playing', 'paused', 'offseason']).toContain(state);
   });
+
+  // ---------------------------------------------------------------------------
+  // Tab navigation — real clicks, regression guard for the v0.1 bug where
+  // every non-disabled tab silently received disabled="undefined" and swallowed
+  // every click.
+  // ---------------------------------------------------------------------------
+
+  // Tab visible labels + the DOM landmark expected on the rendered content.
+  const TAB_CHECKS: Array<{ label: string; expectHeading: string }> = [
+    { label: 'Roster',       expectHeading: 'Roster' },
+    { label: 'Schedule',     expectHeading: 'Schedule' },
+    { label: 'Standings',    expectHeading: 'Standings' },
+    { label: 'Shop',         expectHeading: 'Upgrades' },
+    { label: 'Achievements', expectHeading: 'Achievements' },
+    { label: 'Settings',     expectHeading: 'Settings' },
+  ];
+
+  for (const { label, expectHeading } of TAB_CHECKS) {
+    test(`tab "${label}" is clickable and renders its content`, async ({ page }) => {
+      const tab = page.locator('.tab-btn', { hasText: label }).first();
+      await expect(tab).toBeVisible();
+      // Critical assertion: the button must NOT have the HTML disabled attribute
+      // set. Bug history: a bad setAttribute('disabled', undefined) call left
+      // every tab disabled="undefined", silently swallowing clicks.
+      const isHtmlDisabled = await tab.evaluate(
+        (el) => (el as HTMLButtonElement).hasAttribute('disabled'),
+      );
+      expect(isHtmlDisabled).toBe(false);
+
+      await tab.click();
+
+      const heading = page.locator('.section-title', { hasText: expectHeading });
+      await expect(heading).toBeVisible();
+    });
+  }
+
+  test('Off-Season tab is disabled during regular season', async ({ page }) => {
+    // Fresh boot is always in 'regular' phase.
+    const tab = page.locator('.tab-btn', { hasText: 'Off-Season' }).first();
+    await expect(tab).toBeVisible();
+    const isHtmlDisabled = await tab.evaluate(
+      (el) => (el as HTMLButtonElement).hasAttribute('disabled'),
+    );
+    expect(isHtmlDisabled).toBe(true);
+  });
 });
