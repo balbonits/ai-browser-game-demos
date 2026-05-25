@@ -23,7 +23,7 @@ import {
   buildGun, updateGun, setFiring, maybeAutoFire, getGunDamage,
 } from './gun.js';
 import {
-  enemyMeshes, setScene, resetEnemies, updateEnemies,
+  enemies, enemyMeshes, setScene, resetEnemies, updateEnemies,
   damageEnemy, reapDead, aliveCount,
 } from './enemies.js';
 import {
@@ -417,6 +417,34 @@ function loop(now) {
   update(dt);
   render();
   requestAnimationFrame(loop);
+}
+
+// --- Test hook (read-only; only exposed when ?test=1) ---
+//
+// E2E tests read game state through this surface. All accessors return
+// plain copies — no live THREE.Vector3 refs so Playwright's evaluate()
+// can serialize the values safely.
+
+if (new URLSearchParams(location.search).has('test')) {
+  window.__gameTest = {
+    getState:     () => game.state,
+    getWave:      () => game.wave,
+    getScore:     () => game.score,
+    getHp:        () => player.hp,
+    getEnemies:   () => enemies.map(e => ({
+      kind: e.kind,
+      hp:   e.hp,
+      pos:  { x: e.mesh.position.x, y: e.mesh.position.y, z: e.mesh.position.z },
+    })),
+    getPlayer:    () => ({
+      pos: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
+      vel: { x: player.velocity.x, y: player.velocity.y, z: player.velocity.z },
+      hp:  player.hp,
+      alive: player.alive,
+    }),
+    getBestWave:  () => Number(localStorage.getItem(STORAGE.BEST_WAVE) || 0),
+    getBestScore: () => Number(localStorage.getItem(STORAGE.BEST_SCORE) || 0),
+  };
 }
 
 // --- Boot ---
