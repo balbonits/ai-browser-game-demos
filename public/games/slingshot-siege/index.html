@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Slingshot Siege · AI Browser Game Demos</title>
+  <meta name="description" content="Slingshot Siege — drag-to-aim physics puzzler. Knock the pigs off their fortifications. Built entirely by AI." />
+  <meta name="copyright" content="© 2026 John Dilig" />
+  <meta name="author" content="John Dilig" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="/">← all games</a>
+
+  <div class="stage">
+    <div class="frame">
+      <canvas id="game" width="960" height="540"></canvas>
+      <div class="hud-top">
+        <button
+          class="sound-toggle"
+          id="sound-toggle"
+          type="button"
+          aria-label="Mute sound"
+          title="Mute / unmute (M)"
+        >🔊</button>
+      </div>
+      <div class="hud-bottom" id="level-select" hidden>
+        <span class="hud-label">Levels</span>
+        <button type="button" data-level="0">1</button>
+        <button type="button" data-level="1">2</button>
+        <button type="button" data-level="2">3</button>
+      </div>
+    </div>
+    <div class="meta">
+      <strong>Slingshot Siege</strong> — drag the bird back, release to fire. Knock every pig off the fortification.
+      <kbd>drag</kbd> aim ·
+      <kbd>R</kbd> retry level ·
+      <kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd> jump to level ·
+      <kbd>M</kbd> mute
+    </div>
+    <div class="legal-strip">
+      © 2026 John Dilig ·
+      code <a href="../../LICENSE">MIT</a> ·
+      physics by <a href="https://brm.io/matter-js/" rel="noopener">Matter.js</a> (CDN via <a href="https://esm.sh" rel="noopener">esm.sh</a>) ·
+      all visuals and audio synthesized in code (no third-party assets) ·
+      <a href="../../credits.html">credits</a>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

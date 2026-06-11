@@ -16,6 +16,15 @@ export type Game = {
 
 export const GAMES: Game[] = [
   {
+    slug: 'slingshot-siege',
+    title: 'Slingshot Siege',
+    year: '2026',
+    kind: 'Physics puzzler',
+    description:
+      'Drag-to-aim slingshot. Topple wooden and stone fortifications to knock the pigs off across three levels.',
+    tags: ['Matter.js', 'Canvas2D', 'Web Audio'],
+  },
+  {
     slug: 'running-man',
     title: 'Running Man',
     year: '2026',
