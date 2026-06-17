@@ -141,6 +141,36 @@ Only the best (lowest) time is stored. A `★ NEW!` banner appears on the win sc
 
 Moves are tile-snapped (one cell per step). Pressing a direction fires immediately; holding it auto-repeats after 0.18 s initial delay, then every 0.07 s — feels snappy for maze navigation without being uncontrollable.
 
+## Testing
+
+The game exposes a read-only debug hook on `window.__gameTest` when loaded with `?test=1` in the URL (`/games/maze-runner/index.html?test=1`). In production (no `?test=1`) the hook is absent — it is gated by the query parameter check near the bottom of `main.js`.
+
+### Hook surface (`window.__gameTest`)
+
+| Accessor | Returns |
+| --- | --- |
+| `getState()` | Current game state string: `'SPLASH'` \| `'PLAYING'` \| `'WIN'` \| `'HISTORY'` |
+| `getDiff()` | Difficulty index: `0` (Small) \| `1` (Medium) \| `2` (Large) |
+| `getSeed()` | Active maze seed (string or number), or `null` if no game is running |
+| `getMaze()` | `{ cols, rows, cells: number[], seed, numericSeed }` copy, or `null` |
+| `getPlayer()` | `{ col, row }` — current player cell |
+| `getExit()` | `{ col, row }` — exit cell |
+| `getGems()` | Array of `{ col, row, collected }` — copy of all gem entries |
+| `getElapsed()` | Elapsed seconds since run start (number); `0` until first move |
+| `getStartTs()` | `performance.now()` timestamp of first move, or `null` |
+| `getPromptActive()` | `true` when the custom-seed prompt dialog is open |
+
+All accessors return copies, never live references. The hook is read-only; it cannot mutate game state.
+
+### Test files
+
+| Tier | File | What it covers |
+| --- | --- | --- |
+| Unit | `tests/unit/maze-runner/maze.test.js` | Direction constants, `generateMaze` determinism and spanning-tree properties, `bfsPath` connectivity and edge cases, `pickGems` count/exclusion/dead-end invariants |
+| Replay | `tests/replay/maze-runner.replay.test.js` | Cells-array hash snapshot for seed=`'alpha'` 11×9; determinism across two runs; seed=`'beta'` diverges |
+| Property | `tests/property/maze-runner.property.test.js` | Full connectivity for any string seed and (cols, rows) in [3,30]; `bfsPath` always non-null; `pickGems` count ≤ requested and excludes start/exit |
+| E2E | `tests/e2e/maze-runner.spec.ts` | Splash initial state, difficulty key bindings, game start (player at origin, exit at bottom-right), player movement, R returns to splash, mute persistence |
+
 ## Known issues / deferred
 
 - No touch/mobile controls — the game is keyboard-only.
