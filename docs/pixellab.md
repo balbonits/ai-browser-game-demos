@@ -24,15 +24,15 @@ All generation calls are **non-blocking** and return a **job ID**. You must:
 1. Call the `create_*` or `animate_*` tool → receive `job_id`.
 2. Poll with the matching `get_*` tool until the job reports complete.
 3. Download the resulting image(s) from the URL(s) the job returns.
-4. Save the file(s) under `games/<slug>/assets/` with descriptive names.
+4. Save the file(s) under `public/games/<slug>/<category>/` (e.g. `characters/`, `obstacles/`, `backdrops/`) with descriptive names.
 
 Do **not** commit raw API responses or temporary job data — only the final image files.
 
 ## Conventions
 
 - **Naming.** `hero-idle.png`, `enemy-slime-walk.png`, `tiles-forest.png`. Kebab-case, descriptive.
-- **Location.** Always under the consuming game's `assets/` folder. Never in the repo root.
-- **Reuse.** If two games share art, copy it into each game's `assets/` — keep games self-contained. Only extract to a shared folder if it becomes genuinely painful to maintain duplicates.
+- **Location.** Always under a top-level category folder inside the consuming game (`public/games/<slug>/characters/`, etc.). Never in the repo root.
+- **Reuse.** If two games share art, copy it into each game's own category folders — keep games self-contained. Only extract to a shared folder if it becomes genuinely painful to maintain duplicates.
 - **Attribution.** PixelLab-generated art is governed by [PixelLab's TOS](https://pixellab.ai/termsofservice). The repo's `LICENSE-ASSETS` does **not** re-license PixelLab output.
 
 ## Credits & cost

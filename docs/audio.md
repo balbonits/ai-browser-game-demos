@@ -15,7 +15,7 @@ Tradeoff: chip-tune / beep-and-boop aesthetic. Fine for the kind of demos this r
 
 ## The `AudioEngine` pattern
 
-Games should structure audio as a small class that owns the `AudioContext` and gain nodes. See [`games/running-man/audio.js`](../games/running-man/audio.js) for the reference implementation.
+Games should structure audio as a small class that owns the `AudioContext` and gain nodes. See [`public/games/running-man/audio.js`](../public/games/running-man/audio.js) for the reference implementation.
 
 Key pieces every engine needs:
 

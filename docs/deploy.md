@@ -1,16 +1,16 @@
 # Deploy
 
-This repo is deployed as a static site to **Vercel**.
+This repo is deployed to **Vercel** as a Vite build: the React landing shell is compiled to `dist/`, and `public/` (including every game under `public/games/<slug>/`) is copied into it verbatim.
 
 **Primary URL:** <https://games.jdilig.me> &nbsp;·&nbsp; **Mirror:** <https://ai-browser-game-demos.vercel.app>
 
-The Vercel project (`ai-browser-game-demos`) is connected to the GitHub repo, so every push to `main` auto-deploys to production. There's no build step — Vercel just serves the repo's files as static assets. The custom domain `games.jdilig.me` is attached as a Vercel domain via a `CNAME` at the registrar pointing to `cname.vercel-dns.com`.
+The Vercel project (`ai-browser-game-demos`) is connected to the GitHub repo, so every push to `main` auto-deploys to production. Vercel runs `npm run build` (`tsc -b && vite build`) and serves `dist/`. The games themselves have no build step. The custom domain `games.jdilig.me` is attached as a Vercel domain via a `CNAME` at the registrar pointing to `cname.vercel-dns.com`.
 
 ## Files involved
 
-- [`vercel.json`](../vercel.json) — clean URLs (no `.html` in the path), long-lived cache on `/games/<slug>/assets/*`, short cache on JS/CSS.
+- [`vercel.json`](../vercel.json) — framework `vite`, build command `npm run build`, output directory `dist`, clean URLs, `trailingSlash: true`, long-lived cache on game images (`/games/**/*.png|jpg|…`), short cache on JS/CSS.
 - [`.vercelignore`](../.vercelignore) — excludes local Claude state, the `.git` folder, the `docs/` folder, and root-level `.md` files (everything that's only meaningful inside the repo, not at runtime).
-- [`package.json`](../package.json) — holds the `dev` script only. **No dependencies, no build step.** Vercel treats this as a plain static project.
+- [`package.json`](../package.json) — holds the `dev`, `build`, `preview`, and test scripts plus React/Vite/Tailwind/Vitest/Playwright dependencies. Games never import from it.
 
 ## How it was set up
 
@@ -26,7 +26,7 @@ The Vercel project (`ai-browser-game-demos`) is connected to the GitHub repo, so
    ```
    That linked the GitHub repo so subsequent pushes auto-deploy.
 
-3. **Subsequent updates**: just `git push origin main`. Vercel picks it up.
+3. **Subsequent updates**: just `git push origin main`. Vercel picks it up and runs the build.
 
 ## Manual redeploy
 
@@ -65,10 +65,11 @@ This requires editing the main `jdilig.me` project (`jdilig-me-v3`). Add a rewri
 ## Local testing before deploy
 
 ```sh
+npm install   # first time only
 npm run dev
 ```
 
-That runs `python3 -m http.server 0 --bind 127.0.0.1` — it binds a free port and prints the URL. Open it and click through to the games.
+That runs Vite at <http://localhost:5173>. Open it and click through to the games. To check the production build, run `npm run build && npm run preview`.
 
 ## What NOT to commit
 

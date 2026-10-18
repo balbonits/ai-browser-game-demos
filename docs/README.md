@@ -9,6 +9,8 @@ Project documentation for the AI Browser Game Demos repo.
 - [`conventions.md`](conventions.md) — code style, file layout, and naming conventions.
 - [`agents.md`](agents.md) — the `artist` and `dev` subagent personas, when to use each.
 - [`audio.md`](audio.md) — Web Audio conventions (synthesized, no audio files).
+- [`testing.md`](testing.md) — test tiers (unit / replay / property / e2e), the pre-push hook, and how to run them.
+- [`journal.md`](journal.md) — dev journal of decisions, discoveries, and bugs.
 - [`deploy.md`](deploy.md) — how to deploy to Vercel as a subsite of `jdilig.me`.
 - [`games/`](games/) — per-game documentation (one file per game, plus a template).
 
