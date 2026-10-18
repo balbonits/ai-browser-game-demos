@@ -90,6 +90,17 @@ export const WAVES = [
 
 export const TOTAL_WAVES = WAVES.length;
 
+// HUD wave label. Shows the wave the player is IN (or just cleared), never the
+// upcoming one: while a wave is active it is that wave's index; between waves
+// it is the last cleared wave (0 before the first). Past the named campaign the
+// label gains an infinity glyph (endless mode).
+//   activeIndex - index of the wave in progress, or 0 when none is active
+//   completed   - last fully cleared wave (0 = none yet)
+export function waveLabel(activeIndex, completed) {
+  const n = activeIndex > 0 ? activeIndex : Math.max(0, completed);
+  return n > TOTAL_WAVES ? `WAVE ${n} \u221e` : `WAVE ${n}`;
+}
+
 // Endless mode multipliers — applied to enemy hp / spawn count once
 // the player has cleared all named waves.
 export function endlessMultipliers(idx) {

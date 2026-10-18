@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 
 import {
-  STATE, STORAGE, WAVE_COOLDOWN, TOTAL_WAVES, PLAYER_HP,
+  STATE, STORAGE, WAVE_COOLDOWN, TOTAL_WAVES, PLAYER_HP, waveLabel,
 } from './config.js';
 import { AudioEngine } from './audio.js';
 import {
@@ -28,7 +28,7 @@ import {
 } from './enemies.js';
 import {
   startWave, resetWaves, updateWaves, isWaveActive, isWaveSpawningDone,
-  isWaveCleared, markWaveCleared,
+  isWaveCleared, markWaveCleared, currentWaveIndex,
 } from './waves.js';
 
 // --- DOM handles ---
@@ -138,10 +138,8 @@ function updateHud() {
   const pct = Math.max(0, Math.min(1, player.hp / PLAYER_HP));
   hpFill.style.width = `${(pct * 100).toFixed(1)}%`;
   hpNum.textContent = `${player.hp}`;
-  // Wave label — switch to ∞ glyph past the named campaign.
-  const wDisp = game.state === STATE.PLAYING ? Math.max(1, game.wave + 1) : Math.max(0, game.wave);
-  const wLabel = wDisp > TOTAL_WAVES ? `WAVE ${wDisp} ∞` : `WAVE ${wDisp}`;
-  statWave.textContent = wLabel;
+  // Wave label: the wave in progress (or the last one cleared), not the next one.
+  statWave.textContent = waveLabel(isWaveActive() ? currentWaveIndex() : 0, game.wave);
   statScore.textContent = `SCORE ${game.score}`;
   statKills.textContent = `KILLS ${game.kills}`;
 }

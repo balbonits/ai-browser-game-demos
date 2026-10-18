@@ -23,6 +23,7 @@ Everything since the 0.1.0 tag (2026-04-25), inferred from git history. Dates ar
 - Docs refresh: README, `docs/`, `.claude/agents/`, `CLAUDE.md`, and `AGENTS.md` updated to the React/Vite setup, `npm install`, current paths (`src/data/games.ts`, `public/games/<slug>/`, `public/credits.html`), Node 22, the test commands, and the pre-push hook.
 
 ### Fixed
+- **Block Arena: HUD, wave label, thumbnail** (2026-10-18). The WAVE / SCORE / KILLS rows overlapped because the frame's `line-height: 0` leaked into the HUD (now `1.3`); on narrow frames the HP group, stat stack, sound button and hint no longer collide, and the "all games" link no longer sits on the HUD below ~1300px. The wave label used to show the *next* wave between waves and the *previous* one when paused; it now shows the wave in progress (or the last one cleared) via a tested `waveLabel()` in `config.js`. New brighter thumbnail `thumb-v2.webp` captured mid wave 3 (new filename because thumbnails are cached immutably).
 - Neon Blocks: `Board.clearRows` corrupted every multi-row line clear (doubles, triples, Tetrises) since v0.1; replaced with single-pass bottom-up compaction and covered by unit tests (2026-05-01).
 - Idle Hoops RPG: tab clicks did nothing because the `el()` helper stringified `undefined` attribute values (2026-05-15).
 
