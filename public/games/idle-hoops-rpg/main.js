@@ -22,8 +22,10 @@ import { enqueueToast, getToasts, clearToasts, renderToasts, suppressToasts } fr
 // Constants
 // ---------------------------------------------------------------------------
 
-// In test mode the tick interval is 100ms so E2E tests don't wait.
-const IS_TEST = new URLSearchParams(location.search).has('test');
+// In test mode the tick interval is 100ms so E2E tests don't wait. Strict: only the
+// exact value `?test=1` enables test mode (not `?test`, `?test=0`, `?test=true`, ...),
+// so a stray query string can never speed the clock up or expose the mutating hook.
+const IS_TEST = new URLSearchParams(location.search).get('test') === '1';
 const TICK_MS = IS_TEST ? 100 : 30_000;
 
 // Vacation cap: 30 days * 24h * 3600s / 30s = 86400 ticks.

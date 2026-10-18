@@ -121,7 +121,7 @@ if (new URLSearchParams(location.search).has('test')) {
 Rules:
 
 1. **Read-only.** The hook reports state; it never mutates it.
-2. **Gated by `?test=1`.** Production users don't see this surface. E2E tests pass `?test=1` when navigating.
+2. **Gated by the exact value `?test=1`.** Production users don't see this surface. Use `new URLSearchParams(location.search).get('test') === '1'`, never `.has('test')`: `?test`, `?test=0`, `?test=true` must not enable it (`tests/e2e/test-hook-gating.spec.ts` guards every game). E2E tests pass `?test=1` when navigating.
 3. **Returns copies, not live references.** `board.cells.slice()`, not `board.cells`. The test must not be able to corrupt game state.
 4. **Lives in `main.js`, near the top.** One block, easy to find. Don't scatter hooks across modules.
 5. **Documented per-game.** The game's `docs/games/<slug>.md` lists the hook surface as part of "Testing."
