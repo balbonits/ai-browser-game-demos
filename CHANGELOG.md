@@ -23,6 +23,7 @@ Everything since the 0.1.0 tag (2026-04-25), inferred from git history. Dates ar
 - Docs refresh: README, `docs/`, `.claude/agents/`, `CLAUDE.md`, and `AGENTS.md` updated to the React/Vite setup, `npm install`, current paths (`src/data/games.ts`, `public/games/<slug>/`, `public/credits.html`), Node 22, the test commands, and the pre-push hook.
 
 ### Fixed
+- **Strict `?test=1` test hook** (2026-10-18). Neon Blocks, Idle Hoops RPG and Neon Tower Defense enabled `window.__gameTest` (and, for Idle Hoops, the 100 ms test clock and the mutating test helpers) for *any* `test` query parameter, including `?test`, `?test=0` and `?test=true`. They now require exactly `?test=1`, like Block Arena, Maze Runner and Running Man already did. New `tests/e2e/test-hook-gating.spec.ts` checks all six games, and `docs/testing.md` states the rule.
 - Neon Blocks: `Board.clearRows` corrupted every multi-row line clear (doubles, triples, Tetrises) since v0.1; replaced with single-pass bottom-up compaction and covered by unit tests (2026-05-01).
 - Idle Hoops RPG: tab clicks did nothing because the `el()` helper stringified `undefined` attribute values (2026-05-15).
 
