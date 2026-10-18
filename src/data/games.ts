@@ -42,11 +42,11 @@ export const GAMES: Game[] = [
     description:
       'Shape-based tower defense, neon CRT aesthetic. Every visual is geometry, every sound is synthesized.',
     tags: ['Vanilla JS', 'Canvas2D', 'Web Audio'],
-    // thumb-v2 / thumb-wide-v2: three towers placed at a bend, enemies mid-path (new names bust the immutable cache).
-    thumb: '/games/neon-tower-defense/thumb-v2.webp',
+    // thumb-v3 / thumb-wide-v3: three towers placed at a bend, enemies mid-path, readable buy buttons (new names bust the immutable cache).
+    thumb: '/games/neon-tower-defense/thumb-v3.webp',
     thumbAlt:
-      'Neon Tower Defense: bolt, pulse and spike towers at a path bend, firing on red squares marching along the glowing path.',
-    thumbWide: '/games/neon-tower-defense/thumb-wide-v2.webp',
+      'Neon Tower Defense: bolt, pulse and spike towers firing on red squares along a glowing path, above the tower buy buttons.',
+    thumbWide: '/games/neon-tower-defense/thumb-wide-v3.webp',
     featured: true,
   },
   {

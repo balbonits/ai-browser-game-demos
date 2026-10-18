@@ -266,13 +266,45 @@ export function drawHudStrip(ctx, {
 
 // --- Tower buttons (bottom strip) ---
 //
-// Three tower-buy slots drawn at the bottom of the canvas — each shows
-// the tower's signature shape in its color, the level-1 cost, and the
-// hotkey. Selected slot pulses; unaffordable slots dim.
+// Three tower-buy slots drawn at the bottom of the canvas. Each slot is a
+// column of three rows: the tower name on its own line, then the tower's
+// signature shape next to the level-1 cost, then the hotkey. Selected slot
+// pulses; unaffordable slots dim.
+//
+// Geometry lives in towerButtonLayout() so drawing, hit-testing, the test
+// hook and the unit tests all read the same numbers. The slots are tall
+// enough that, at the smallest phone widths the page supports, they still
+// make a comfortable tap target (the canvas is scaled to the viewport).
 
-const BUTTON_W = 56;
-const BUTTON_H = 36;
-const BUTTON_GAP = 6;
+export const BUTTON_W = 66;
+export const BUTTON_H = 58;
+export const BUTTON_GAP = 4;
+export const BUTTON_BOTTOM = 6;
+
+// Font sizes (canvas px) used for each row; layout uses them to size boxes.
+export const BUTTON_FONT = { name: 9, cost: 10, key: 9 };
+
+// Where every part of every button sits, in canvas pixels. Text anchors use
+// textBaseline 'middle'; textAlign is 'center' for the name and hotkey and
+// 'left' for the cost.
+export function towerButtonLayout(count) {
+  const total = count * BUTTON_W + (count - 1) * BUTTON_GAP;
+  const startX = (W - total) / 2;
+  const y = H - BUTTON_H - BUTTON_BOTTOM;
+  const buttons = [];
+  for (let i = 0; i < count; i++) {
+    const x = startX + i * (BUTTON_W + BUTTON_GAP);
+    const cx = x + BUTTON_W / 2;
+    buttons.push({
+      x, y, w: BUTTON_W, h: BUTTON_H,
+      name:   { x: cx,      y: y + 11 },
+      glyph:  { x: cx - 16, y: y + 30, r: 7 },
+      cost:   { x: cx - 6,  y: y + 30 },
+      hotkey: { x: cx,      y: y + 47 },
+    });
+  }
+  return { startX, y, w: total, h: BUTTON_H, buttons };
+}
 
 export function drawTowerButtons(ctx, {
   towers,
@@ -283,17 +315,15 @@ export function drawTowerButtons(ctx, {
   pulseT = 0,
 } = {}) {
   ctx.save();
-  const total = keys.length * BUTTON_W + (keys.length - 1) * BUTTON_GAP;
-  const startX = (W - total) / 2;
-  const y = H - BUTTON_H - 6;
+  const layout = towerButtonLayout(keys.length);
+  const { startX, y, w: total } = layout;
 
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
     const tw = towers[key];
     const cost = tw.levels[0].cost;
-    const x = startX + i * (BUTTON_W + BUTTON_GAP);
-    const cx = x + BUTTON_W / 2;
-    const cy = y + BUTTON_H / 2;
+    const b = layout.buttons[i];
+    const x = b.x;
 
     const affordable = money >= cost;
     const selected = key === selectedKey;
@@ -306,35 +336,36 @@ export function drawTowerButtons(ctx, {
     ctx.fillStyle = rgba(tw.color, dim ? 0.05 : (selected ? 0.22 : 0.12));
     ctx.strokeStyle = dim ? rgba(tw.color, 0.35) : tw.color;
     ctx.lineWidth = selected ? 1.8 : 1.2;
-    roundRect(ctx, x, y, BUTTON_W, BUTTON_H, 4);
+    roundRect(ctx, x, y, BUTTON_W, BUTTON_H, 5);
     ctx.fill();
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Shape glyph (left-ish)
-    pathShape(ctx, tw.shape, cx - 14, cy - 2, 7);
+    // Row 2: shape glyph (left) next to the cost (right)
+    pathShape(ctx, tw.shape, b.glyph.x, b.glyph.y, b.glyph.r);
     neon(ctx, { stroke: tw.color, fill: 'auto', fillAlpha: dim ? 0.10 : 0.30, glow: dim ? 4 : 10, width: 1.6 });
 
     // Cost
     ctx.fillStyle = dim ? rgba(COLORS.ok, 0.45) : COLORS.ok;
     ctx.shadowColor = COLORS.ok;
     ctx.shadowBlur = dim ? 0 : 6;
-    ctx.font = "bold 10px 'SF Mono', ui-monospace, Menlo, monospace";
+    ctx.font = `bold ${BUTTON_FONT.cost}px 'SF Mono', ui-monospace, Menlo, monospace`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`¢${cost}`, cx - 4, cy - 5);
+    ctx.fillText(`¢${cost}`, b.cost.x, b.cost.y);
     ctx.shadowBlur = 0;
 
-    // Hotkey
+    // Row 3: hotkey
     ctx.fillStyle = rgba(COLORS.hud, dim ? 0.4 : 0.85);
-    ctx.font = "9px 'SF Mono', ui-monospace, Menlo, monospace";
-    ctx.fillText(`${i + 1}`, cx - 4, cy + 8);
-
-    // Tower name (top of button)
-    ctx.fillStyle = rgba(COLORS.hud, dim ? 0.35 : 0.7);
-    ctx.font = "8px 'SF Mono', ui-monospace, Menlo, monospace";
+    ctx.font = `${BUTTON_FONT.key}px 'SF Mono', ui-monospace, Menlo, monospace`;
     ctx.textAlign = 'center';
-    ctx.fillText(tw.name.toUpperCase(), cx, y + 6);
+    ctx.fillText(`${i + 1}`, b.hotkey.x, b.hotkey.y);
+
+    // Row 1: tower name, on its own line above everything else
+    ctx.fillStyle = rgba(COLORS.hud, dim ? 0.5 : 0.92);
+    ctx.font = `bold ${BUTTON_FONT.name}px 'SF Mono', ui-monospace, Menlo, monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText(tw.name.toUpperCase(), b.name.x, b.name.y);
   }
 
   ctx.restore();
@@ -343,12 +374,10 @@ export function drawTowerButtons(ctx, {
 
 // Compute hit-tested key for a (mx, my) inside the button strip.
 export function buttonHitTest(mx, my, keysCount) {
-  const total = keysCount * BUTTON_W + (keysCount - 1) * BUTTON_GAP;
-  const startX = (W - total) / 2;
-  const y = H - BUTTON_H - 6;
+  const { y, buttons } = towerButtonLayout(keysCount);
   if (my < y || my > y + BUTTON_H) return -1;
   for (let i = 0; i < keysCount; i++) {
-    const x = startX + i * (BUTTON_W + BUTTON_GAP);
+    const x = buttons[i].x;
     if (mx >= x && mx <= x + BUTTON_W) return i;
   }
   return -1;
