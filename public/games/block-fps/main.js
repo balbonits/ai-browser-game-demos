@@ -425,7 +425,7 @@ function loop(now) {
 // plain copies — no live THREE.Vector3 refs so Playwright's evaluate()
 // can serialize the values safely.
 
-if (new URLSearchParams(location.search).has('test')) {
+if (new URLSearchParams(location.search).get('test') === '1') {
   window.__gameTest = {
     getState:     () => game.state,
     getWave:      () => game.wave,

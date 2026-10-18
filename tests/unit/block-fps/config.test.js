@@ -58,11 +58,8 @@ describe('config — ENEMIES table', () => {
 // ---------------------------------------------------------------------------
 
 describe('config — WAVES table', () => {
-  it('WAVES.length equals TOTAL_WAVES', () => {
-    expect(WAVES.length).toBe(TOTAL_WAVES);
-  });
-
-  it('TOTAL_WAVES is 8', () => {
+  it('WAVES has 8 wave templates (TOTAL_WAVES is derived from it)', () => {
+    expect(WAVES).toHaveLength(8);
     expect(TOTAL_WAVES).toBe(8);
   });
 

@@ -1,45 +1,77 @@
-// Unit tests for block-fps/gun.js — fire-rate gating and damage constants.
+// Unit tests for block-fps/gun.js — cooldown gating, damage constant, firing flag.
 //
-// gun.js uses THREE internally for the raycaster and gun mesh, so we can't
-// call tryFire() without a real scene/camera/targets. Instead we test:
-//
-//   1. The fire-rate gating formula (pure arithmetic, no scene).
-//   2. getGunDamage() returns the expected constant.
-//   3. setFiring/isFiring round-trip correctly.
-//
-// tryFire() and maybeAutoFire() are integration-tested via E2E.
+// buildGun()/tryFire() run against a minimal real THREE scene + camera (no
+// renderer needed), so the production cooldown logic in gun.js is what's under
+// test, not a re-implementation of it. gun.js keeps its cooldown in module
+// state, so each test begins by "draining" it with a large-dt fire.
 
-import { describe, it, expect } from 'vitest';
-import { getGunDamage, setFiring, isFiring } from '../../../public/games/block-fps/gun.js';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import * as THREE from 'three';
+import {
+  buildGun, tryFire, maybeAutoFire, getGunDamage, setFiring, isFiring,
+} from '../../../public/games/block-fps/gun.js';
 import { GUN_DAMAGE, GUN_RATE, ENEMIES } from '../../../public/games/block-fps/config.js';
 
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+scene.add(camera);
+const targets = [];
+
+// Large dt drives the module cooldown to <= 0, fires once, then leaves
+// cooldown at exactly GUN_RATE: a known starting point for each test.
+function primeCooldown() {
+  const r = tryFire(scene, camera, targets, GUN_RATE * 100);
+  expect(r.fired).toBe(true);
+}
+
 // ---------------------------------------------------------------------------
-// Fire-rate gating — pure arithmetic
+// Fire-rate gating — real tryFire()
 // ---------------------------------------------------------------------------
 
-describe('gun — fire-rate gating (pure arithmetic)', () => {
-  // The cooldown model: a shot is allowed when cooldown <= 0.
-  // After firing, cooldown is reset to GUN_RATE.
-  // Each frame: cooldown -= dt.
-  // canFire at time t after last shot = (t >= GUN_RATE).
-  function canFire(elapsed, gunRate) {
-    return elapsed >= gunRate;
-  }
-
-  it('cannot fire immediately after last shot (elapsed=0)', () => {
-    expect(canFire(0, GUN_RATE)).toBe(false);
+describe('gun — fire-rate gating (real tryFire)', () => {
+  beforeAll(() => {
+    buildGun(camera);
   });
 
-  it('cannot fire partway through cooldown', () => {
-    expect(canFire(GUN_RATE * 0.5, GUN_RATE)).toBe(false);
+  beforeEach(() => {
+    setFiring(false);
+    primeCooldown();
   });
 
-  it('can fire once the full cooldown has elapsed', () => {
-    expect(canFire(GUN_RATE, GUN_RATE)).toBe(true);
+  it('cannot fire immediately after last shot (dt=0)', () => {
+    expect(tryFire(scene, camera, targets, 0).fired).toBe(false);
   });
 
-  it('can fire past the full cooldown (late input)', () => {
-    expect(canFire(GUN_RATE * 2, GUN_RATE)).toBe(true);
+  it('cannot fire partway through the cooldown', () => {
+    expect(tryFire(scene, camera, targets, GUN_RATE * 0.5).fired).toBe(false);
+  });
+
+  it('fires once accumulated dt reaches GUN_RATE', () => {
+    expect(tryFire(scene, camera, targets, GUN_RATE * 0.5).fired).toBe(false);
+    expect(tryFire(scene, camera, targets, GUN_RATE * 0.5).fired).toBe(true);
+  });
+
+  it('fires after a late input (dt well past GUN_RATE)', () => {
+    expect(tryFire(scene, camera, targets, GUN_RATE * 2).fired).toBe(true);
+  });
+
+  it('a shot into empty space reports no enemy and no hit point', () => {
+    const r = tryFire(scene, camera, targets, GUN_RATE * 2);
+    expect(r).toMatchObject({ fired: true, enemy: null, point: null });
+  });
+
+  it('maybeAutoFire does not fire when the trigger is not held', () => {
+    expect(maybeAutoFire(scene, camera, targets, GUN_RATE * 2, true).fired).toBe(false);
+  });
+
+  it('maybeAutoFire does not fire when not allowed, even if trigger held', () => {
+    setFiring(true);
+    expect(maybeAutoFire(scene, camera, targets, GUN_RATE * 2, false).fired).toBe(false);
+  });
+
+  it('maybeAutoFire fires when trigger held, allowed and cooldown elapsed', () => {
+    setFiring(true);
+    expect(maybeAutoFire(scene, camera, targets, GUN_RATE * 2, true).fired).toBe(true);
   });
 
   it('GUN_RATE is positive (cooldown > 0 enforces a minimum gap)', () => {
@@ -47,8 +79,6 @@ describe('gun — fire-rate gating (pure arithmetic)', () => {
   });
 
   it('fire rate is at least 5 RPS (GUN_RATE <= 0.2s)', () => {
-    // Spec says ≈7.7 RPS (0.13s). Guard the lower bound so we catch
-    // a config regression that makes the gun too slow.
     expect(GUN_RATE).toBeLessThanOrEqual(0.2);
   });
 });
