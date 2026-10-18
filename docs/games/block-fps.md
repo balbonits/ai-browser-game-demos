@@ -1,6 +1,6 @@
 # Block Arena
 
-**Slug:** `block-fps` &nbsp;·&nbsp; **Folder:** `games/block-fps/` &nbsp;·&nbsp; **Status:** playable (v0.1)
+**Slug:** `block-fps` &nbsp;·&nbsp; **Folder:** `public/games/block-fps/` &nbsp;·&nbsp; **Status:** playable (v0.1)
 
 A first-person shooter built entirely by AI. The player wields a polygonal gun (low-poly viewmodel made of `BoxGeometry` parts) and defends an arena from waves of 3D-block enemies. Three.js via CDN, no build step, no third-party assets — every model is procedural geometry, every sound is synthesized at runtime.
 
@@ -42,7 +42,7 @@ The first click on the canvas (intro / dead / paused screens) engages [Pointer L
 ## Module layout
 
 ```
-games/block-fps/
+public/games/block-fps/
 ├── index.html       – canvas + HUD overlays + Three importmap
 ├── style.css
 ├── main.js          – entry, game state, rAF loop, input wiring, HUD

@@ -1,6 +1,6 @@
 # Running Man
 
-**Slug:** `running-man` &nbsp;·&nbsp; **Folder:** `games/running-man/` &nbsp;·&nbsp; **Status:** playable (v0.2)
+**Slug:** `running-man` &nbsp;·&nbsp; **Folder:** `public/games/running-man/` &nbsp;·&nbsp; **Status:** playable (v0.2)
 
 The first game in the repo. A minimal side-scrolling auto-runner: your character runs automatically to the right; you time jumps to clear obstacles. Trip and fall on contact.
 
@@ -32,7 +32,7 @@ Why vanilla: the repo's convention is vanilla-first for small demos. A one-butto
 ## Module layout
 
 ```
-games/running-man/
+public/games/running-man/
 ├── index.html
 ├── style.css
 ├── main.js          – entry + game state + loop + input + overlays
@@ -51,7 +51,7 @@ Each module has a narrow role. `main.js` is the only file that knows about the g
 
 ## Assets
 
-All assets live under `games/running-man/assets/`.
+All art lives in top-level category folders under `public/games/running-man/` (`characters/`, `obstacles/`, `backdrops/`).
 
 **PixelLab character used:**
 

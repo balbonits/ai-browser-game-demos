@@ -50,6 +50,8 @@ src/                    # React app source
   data/games.ts         # game registry (typed)
   routes/Home.tsx
   hooks/useTheme.ts
+tests/                  # unit / replay / property (Vitest) + e2e (Playwright)
+.husky/pre-push         # runs `npm test` before every push
 public/                 # served verbatim at site root
   games/<slug>/         # one folder per game; vanilla static
   credits.html
@@ -58,13 +60,20 @@ docs/                   # workflows, conventions, asset pipeline notes
 LICENSE, LICENSE-ASSETS # repo-root, served via vite plugin
 ```
 
+## Setup and testing
+
+- Node 22 (what the repo is developed on). `npm install`, then `npm run dev` (Vite, <http://localhost:5173>).
+- `npm test` runs unit + replay + property + e2e; sub-scripts are `test:unit`, `test:property`, `test:e2e`, `test:watch`. E2E needs `npx playwright install chromium` once.
+- There is no cloud CI; tests run locally. A Husky pre-push hook runs `npm test` on every `git push`. See [`docs/testing.md`](docs/testing.md).
+
 ## Workflow for adding a game
 
 1. Pick a short kebab-case slug (e.g. `asteroid-sweep`).
 2. Create `public/games/<slug>/index.html` with a minimal shell and any sibling files it needs.
 3. Generate art via PixelLab MCP (characters, tilesets, etc.) and save under top-level category folders inside the game folder.
 4. Add an entry to `GAMES` in `src/data/games.ts` with `slug`, `title`, `year`, `kind`, `description`, `tags`.
-5. Test by running `npm run dev` and clicking through.
+5. Test by running `npm run dev` and clicking through; run `npm test` (add tests per [`docs/testing.md`](docs/testing.md)).
+6. Add `docs/games/<slug>.md`.
 
 Full checklist: [`docs/adding-a-game.md`](docs/adding-a-game.md).
 

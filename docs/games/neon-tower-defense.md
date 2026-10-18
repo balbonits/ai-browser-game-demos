@@ -1,6 +1,6 @@
 # Neon Tower Defense
 
-**Slug:** `neon-tower-defense` &nbsp;·&nbsp; **Folder:** `games/neon-tower-defense/` &nbsp;·&nbsp; **Status:** playable (v0.1)
+**Slug:** `neon-tower-defense` &nbsp;·&nbsp; **Folder:** `public/games/neon-tower-defense/` &nbsp;·&nbsp; **Status:** playable (v0.1)
 
 A shape-based tower-defense in a neon CRT aesthetic. Place towers along a snaking path and defend the grid for 12 waves. Every visual is a geometric primitive drawn in code — no sprites, no images. Audio is fully synthesized at runtime.
 
@@ -41,7 +41,7 @@ Intended feel: neon, CRT-glowy, fast to grok, hands-off enough that the player c
 ## Module layout
 
 ```
-games/neon-tower-defense/
+public/games/neon-tower-defense/
 ├── index.html
 ├── style.css
 ├── main.js          – entry, game state, loop, input, HUD wiring

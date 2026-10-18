@@ -3,7 +3,7 @@
 This repo defines two project-level Claude Code subagents in `.claude/agents/`:
 
 - [`artist`](../.claude/agents/artist.md) — pixel art & asset generation (PixelLab MCP).
-- [`dev`](../.claude/agents/dev.md) — game code (vanilla JS, Phaser, PixiJS).
+- [`dev`](../.claude/agents/dev.md) — game code (vanilla JS, Phaser, PixiJS, Three.js) and landing-shell code (React/TS).
 
 The goal is a clean separation: **what does the game look like** vs. **how does the game work**. Keeping these in separate personas prevents one agent from drifting into the other's lane, keeps tool access scoped, and makes conversations easier to follow.
 
@@ -13,15 +13,15 @@ Delegate to `artist` when the task is about:
 
 - Creating a new character, tileset, or map object via PixelLab.
 - Generating or regenerating an animation (run, jump, death, idle, etc.).
-- Downloading a PixelLab character ZIP and extracting sprites into a game's `assets/` folder.
+- Downloading a PixelLab character ZIP and extracting sprites into the game's top-level category folders (e.g. `characters/`).
 - Renaming / organizing existing asset files.
 - Questions about which PixelLab template to use.
 - Licensing / attribution questions about generated art.
 
 Examples of prompts:
 - "Generate an 8-frame run animation for character `<uuid>`, east direction only."
-- "Download the character ZIP and put the running frames under `games/running-man/assets/`."
-- "Make a top-down grass-and-stone tileset for `games/maze/`."
+- "Download the character ZIP and put the running frames under `public/games/running-man/characters/`."
+- "Make a top-down grass-and-stone tileset for `public/games/maze/`."
 
 The `artist` agent has access to all PixelLab MCP tools, `Read`, `Write`, `Bash` (for curl/unzip), and `WebFetch`. It does **not** have `Edit` — it's meant to drop new files, not rewrite game code.
 
@@ -29,12 +29,12 @@ The `artist` agent has access to all PixelLab MCP tools, `Read`, `Write`, `Bash`
 
 Delegate to `dev` when the task is about:
 
-- Writing or editing HTML, CSS, or JavaScript in `games/<slug>/`.
+- Writing or editing HTML, CSS, or JavaScript in `public/games/<slug>/`, or TS/TSX in `src/`.
 - Implementing game loops, input, collision, physics, UI, scoring.
 - Wiring a sprite sheet (already produced by `artist`) into the canvas.
-- Registering a new game in `games.js`.
-- Modifying shared root files (`index.html`, `games.js`, `styles.css`) — though structural changes still need user approval.
-- Running a local dev server (`python3 -m http.server`) to test.
+- Registering a new game in `src/data/games.ts`.
+- Modifying the landing shell (`index.html`, `src/`) — though structural changes still need user approval.
+- Running the dev server (`npm run dev`, Vite) and the test suite (`npm test`) to verify.
 
 Examples of prompts:
 - "Implement a one-button jump mechanic with gravity and variable jump height."
@@ -49,8 +49,8 @@ A typical new-game flow:
 
 1. **User → orchestrator:** "Make a new game: side-scrolling runner, using Human Base character."
 2. **Orchestrator → `artist`:** "Generate run/jump/death animations for character `<uuid>`, east only. Report dimensions and frame counts when done."
-3. **Orchestrator → `dev`:** "Build a vanilla-JS runner in `games/running-man/` using these sprites: `hero-run.png` 80×80 × 8 frames, `hero-jump.png` …, etc."
-4. **Orchestrator → `dev`:** "Register the game in `games.js`."
+3. **Orchestrator → `dev`:** "Build a vanilla-JS runner in `public/games/running-man/` using these sprites: `hero-run.png` 80×80 × 8 frames, `hero-jump.png` …, etc."
+4. **Orchestrator → `dev`:** "Register the game in `src/data/games.ts`."
 5. **Orchestrator:** tests by opening the landing page, reports result to the user.
 
 The orchestrator is responsible for:

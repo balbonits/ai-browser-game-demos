@@ -1,6 +1,6 @@
 # <Game Title>
 
-**Slug:** `<slug>` &nbsp;·&nbsp; **Folder:** `games/<slug>/` &nbsp;·&nbsp; **Status:** in-progress | playable | archived
+**Slug:** `<slug>` &nbsp;·&nbsp; **Folder:** `public/games/<slug>/` &nbsp;·&nbsp; **Status:** in-progress | playable | archived
 
 One-line tagline describing the game.
 
@@ -24,7 +24,7 @@ A short paragraph: what the game *is*, what the player *does*, and the intended 
 
 ## Assets
 
-All assets live under `games/<slug>/assets/`.
+All art lives in top-level category folders under `public/games/<slug>/` (`characters/`, `obstacles/`, `backdrops/`, …).
 
 | File | Source | Dimensions | Frames | Notes |
 | --- | --- | --- | --- | --- |

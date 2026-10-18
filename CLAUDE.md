@@ -30,6 +30,12 @@ Don't conflate the two — the rules below differ for each.
 - **Shell components live in `src/components/site/`**; routes in `src/routes/`; theme tokens in `src/styles/tokens.css`. Don't add a per-page CSS file — use Tailwind utilities + tokens.
 - **No new pages without asking.** Right now there's only `/` (Home) plus a static `/credits.html`. Adding routes (about, blog, etc.) is a conversation.
 
+## Setup and testing
+
+- Node 22. `npm install`, then `npm run dev` (Vite at <http://localhost:5173>).
+- `npm test` = unit + replay + property + e2e (`test:unit`, `test:property`, `test:e2e`, `test:watch`). E2E needs `npx playwright install chromium` once.
+- There is no cloud CI; tests run locally. A Husky pre-push hook runs `npm test` before every push. Details in [`docs/testing.md`](docs/testing.md).
+
 ## Adding a new game
 
 See [`docs/adding-a-game.md`](docs/adding-a-game.md) for the step-by-step checklist. TL;DR:

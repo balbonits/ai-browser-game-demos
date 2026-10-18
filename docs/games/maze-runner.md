@@ -1,6 +1,6 @@
 # Maze Runner
 
-**Slug:** `maze-runner` &nbsp;·&nbsp; **Folder:** `games/maze-runner/` &nbsp;·&nbsp; **Status:** playable (v0.2)
+**Slug:** `maze-runner` &nbsp;·&nbsp; **Folder:** `public/games/maze-runner/` &nbsp;·&nbsp; **Status:** playable (v0.2)
 
 Top-down procedural maze runner. Navigate a randomly generated maze from start to exit, collect gems along the way, and beat your best time. The same seed always produces the same maze — share seeds with friends.
 
@@ -33,7 +33,7 @@ Three difficulty sizes let you pick a quick run (Small, ~2 minutes) or a long ch
 ## Module layout
 
 ```
-games/maze-runner/
+public/games/maze-runner/
 ├── index.html
 ├── style.css
 ├── main.js    — entry, state machine, game loop, input, rendering, HUD, minimap

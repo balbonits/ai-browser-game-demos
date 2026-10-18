@@ -6,7 +6,24 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); dates ar
 
 ## [Unreleased]
 
-_(nothing yet)_
+Everything since the 0.1.0 tag (2026-04-25), inferred from git history. Dates are commit dates.
+
+### Added
+- **Neon Blocks** (2026-04-28): a guideline-spec falling-block puzzle (vanilla JS + Canvas2D + Web Audio), registered in `src/data/games.ts`. Unit, replay, property, and e2e tests added on 2026-05-01 (see below). Follow-up fix to the splash screen so arrow keys and clicks select the mode. See [`docs/games/neon-blocks.md`](docs/games/neon-blocks.md).
+- **Idle Hoops RPG** (2026-05-01, v0.1): idle basketball career sim in vanilla JS with a DOM UI. The whole game state round-trips through one hashed base64 string in `localStorage`, with offline catch-up on load. **v0.2** (2026-05-15) adds a Shop tab with 5 team-wide upgrades, 12 achievements, a toast queue, graphical stat bars and a "Team Boost" pill, and bumps the save schema from v1 to v2 (v1 saves are migrated on load). See [`docs/games/idle-hoops-rpg.md`](docs/games/idle-hoops-rpg.md).
+- **Test infrastructure** (2026-04-29, spec in `docs/testing.md` and `docs/journal.md`): Vitest 4 projects for unit / replay / property tiers, fast-check for property tests, Playwright (Chromium) for e2e with an auto-started Vite web server, shared helpers under `tests/shared/`, and a read-only `window.__gameTest` hook gated by `?test=1`. Husky 9 installs a `.husky/pre-push` hook that runs `npm test`. Scripts: `test`, `test:unit`, `test:property`, `test:e2e`, `test:watch`. Per-game tests exist for Neon Blocks and Idle Hoops RPG. There is no cloud CI by design; tests run locally via the npm scripts and the pre-push hook.
+- `docs/testing.md` and `docs/journal.md`.
+
+### Changed
+- **Landing shell converted to React 19 + Vite + TypeScript + Tailwind 4 + React Router 7** (mirrors the `jdilig-me-v3` stack). Games moved from `games/<slug>/` to `public/games/<slug>/` and stay buildless static folders; `credits.html` and `logo.png` moved to `public/`; the game registry moved from `games.js` to `src/data/games.ts`. `LICENSE` and `LICENSE-ASSETS` stay at the repo root and are served and copied into `dist/` by a small Vite plugin. `package.json` now has `dev`, `build`, `preview`, and test scripts and real dependencies.
+- Vercel config: `framework: vite`, `outputDirectory: dist`, and `trailingSlash: true` so relative asset URLs under `/games/<slug>/` resolve.
+- `CLAUDE.md` / `AGENTS.md` rewritten around the two-layer model (React shell, buildless games).
+- Legal posture tightened (2026-05-15): per-game credits for Neon Blocks and Idle Hoops RPG in `public/credits.html`, a "genre conventions and inspirations" section, and softer marketing copy ("modern falling-block puzzle").
+- Docs refresh: README, `docs/`, `.claude/agents/`, `CLAUDE.md`, and `AGENTS.md` updated to the React/Vite setup, `npm install`, current paths (`src/data/games.ts`, `public/games/<slug>/`, `public/credits.html`), Node 22, the test commands, and the pre-push hook.
+
+### Fixed
+- Neon Blocks: `Board.clearRows` corrupted every multi-row line clear (doubles, triples, Tetrises) since v0.1; replaced with single-pass bottom-up compaction and covered by unit tests (2026-05-01).
+- Idle Hoops RPG: tab clicks did nothing because the `el()` helper stringified `undefined` attribute values (2026-05-15).
 
 ## [0.1.0] - 2026-04-25
 
