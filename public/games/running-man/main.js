@@ -15,7 +15,7 @@ import {
 } from './config.js';
 import { AudioEngine } from './audio.js';
 import {
-  hero, loadHeroAssets, resetHero, heroHitbox, tryJump, cutJump,
+  hero, loadHeroAssets, resetHero, heroHitbox, heroOnGround, tryJump, cutJump,
   updateHeroRunning, updateHeroDying, drawHero,
 } from './hero.js';
 import {
@@ -81,12 +81,12 @@ const game = {
 // Read-only surface for E2E tests. Absent in production (no ?test=1).
 // All accessors return copies or primitives — tests cannot mutate game state.
 // Placed here so it has access to `game`, `hero`, and `obstacles`.
-if (new URLSearchParams(location.search).has('test')) {
+if (new URLSearchParams(location.search).get('test') === '1') {
   window.__gameTest = {
     getState:     () => game.state,
     getDistance:  () => game.distance,
     getBest:      () => Number(localStorage.getItem(STORAGE.BEST) || 0),
-    getHero:      () => ({ x: HERO_X, y: hero.y, vy: hero.vy, onGround: hero.y >= HERO_GROUND_Y - HERO_H - 0.5 }),
+    getHero:      () => ({ x: HERO_X, y: hero.y, vy: hero.vy, onGround: heroOnGround() }),
     getSpeed:     () => game.speed,
     getObstacles: () => obstacles.map((o) => ({ x: o.x, y: o.y, name: o.type?.name ?? o.name })),
   };

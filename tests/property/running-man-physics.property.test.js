@@ -16,7 +16,7 @@ import { describe, it } from 'vitest';
 import fc from 'fast-check';
 import {
   GRAVITY, JUMP_VY, HERO_GROUND_Y, HERO_H,
-} from '../../../public/games/running-man/config.js';
+} from '../../public/games/running-man/config.js';
 
 // ---------------------------------------------------------------------------
 // In-test mirror of hero physics (verbatim from hero.js)
@@ -112,13 +112,7 @@ describe('Running Man physics — landing velocity invariant', () => {
         // Run a few extra settle steps.
         settle(hero, 120);
         // After settling, hero must be on ground with vy == 0.
-        if (heroOnGround(hero)) {
-          return hero.vy === 0;
-        }
-        // If the action sequence ends in a jump with not enough steps to land,
-        // settle would have landed them. So if heroOnGround is false here it
-        // would be surprising — but for safety just pass.
-        return true;
+        return heroOnGround(hero) && hero.vy === 0;
       }),
       { numRuns: 200 },
     );
@@ -129,19 +123,32 @@ describe('Running Man physics — jump arc is finite', () => {
   it('hero always returns to ground within 5 seconds of a jump', () => {
     fc.assert(
       fc.property(
-        // Just a single jump from ground, with random dt per step.
+        // A single jump from ground with random dt per step.
         // fc.float requires 32-bit float boundaries and noNaN: true.
-        fc.array(fc.float({ min: Math.fround(0.008), max: Math.fround(0.05), noNaN: true }), { minLength: 1, maxLength: 300 }),
+        fc.array(fc.float({ min: Math.fround(0.008), max: Math.fround(0.05), noNaN: true }), { minLength: 1, maxLength: 625 }),
         (dts) => {
           const hero = makeHero();
+          const maxTime = 5;
+          let elapsed = 0;
+
           tryJump(hero);
+          // Simulate at most 5 simulated seconds; fail if still airborne after.
+          const step = (dt) => {
+            const d = Math.min(dt, maxTime - elapsed);
+            updateHeroRunning(hero, d);
+            elapsed += d;
+            // Landed = clamped to the ground. heroOnGround() alone is true within
+            // 0.5px above the floor while still descending, so also require vy === 0.
+            return heroOnGround(hero) && hero.vy === 0;
+          };
           for (const dt of dts) {
-            updateHeroRunning(hero, dt);
+            if (elapsed >= maxTime) break;
+            if (step(dt)) return true;
           }
-          // After 300 steps of 8-50ms each (up to 15s total), hero must be grounded
-          // — a full jump arc takes ~0.7s.
-          settle(hero, 200);
-          return heroOnGround(hero) && hero.vy === 0;
+          while (elapsed < maxTime) {
+            if (step(Math.fround(0.05))) return true;
+          }
+          return false;
         },
       ),
       { numRuns: 200 },

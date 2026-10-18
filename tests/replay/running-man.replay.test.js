@@ -16,15 +16,15 @@
 // function into spawnObstacle (dependency injection). That refactor is tracked
 // as a future improvement, not implemented here per the constraints.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  OBSTACLE_PATTERNS, OBSTACLE_TYPES,
+  OBSTACLE_TYPES,
   SPEED_START, SPEED_MAX,
   W,
-} from '../../../public/games/running-man/config.js';
+} from '../../public/games/running-man/config.js';
 import {
   resetObstacles, spawnObstacle, obstacles,
-} from '../../../public/games/running-man/obstacles.js';
+} from '../../public/games/running-man/obstacles.js';
 
 describe('Running Man replay — spawnObstacle gap bounds', () => {
   // Per the design in obstacles.js, the gap is chosen from three moods:
@@ -57,6 +57,8 @@ describe('Running Man replay — spawnObstacle gap bounds', () => {
 });
 
 describe('Running Man replay — spawned obstacle structure', () => {
+  beforeEach(() => resetObstacles());
+
   it('after 10 spawns, obstacles array contains entries with valid shape', () => {
     resetObstacles();
     for (let i = 0; i < 10; i++) {
@@ -79,6 +81,7 @@ describe('Running Man replay — spawned obstacle structure', () => {
   });
 
   it('resetObstacles clears the obstacle list', () => {
+    resetObstacles();
     spawnObstacle(SPEED_START);
     expect(obstacles.length).toBeGreaterThan(0);
     resetObstacles();

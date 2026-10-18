@@ -4,22 +4,20 @@
 // be imported directly in the Node/Vitest unit environment. Instead, we mirror
 // the physics logic inline here and assert against the constants from config.js.
 //
-// This is the approved pattern when physics/collision live in a DOM-coupled
-// module: "write the test against the constants and an in-test mirror, note
-// it in comments." — docs/testing.md, constraints section.
-//
-// The mirror is intentionally verbatim from hero.js (updateHeroRunning,
-// tryJump, heroOnGround). If the implementation diverges, this test catches
-// the drift.
+// The mirror below copies the logic of hero.js (heroOnGround, tryJump incl.
+// its STATE.RUNNING guard, updateHeroRunning, heroHitbox), adapted only to take
+// the hero object as an explicit parameter instead of using the module
+// singleton. It does NOT import hero.js, so it will not detect drift on its own:
+// keep it in sync by hand when hero.js changes.
 
 import { describe, it, expect } from 'vitest';
 import {
-  GRAVITY, JUMP_VY, HERO_GROUND_Y, HERO_H, HITBOX, HERO_X,
+  GRAVITY, JUMP_VY, HERO_GROUND_Y, HERO_H, HITBOX, HERO_X, STATE,
 } from '../../../public/games/running-man/config.js';
 
 // ---------------------------------------------------------------------------
 // In-test mirror of hero state and physics functions
-// Verbatim from public/games/running-man/hero.js
+// Mirrors public/games/running-man/hero.js (hero passed explicitly)
 // ---------------------------------------------------------------------------
 
 function makeHero() {
@@ -37,8 +35,8 @@ function heroOnGround(hero) {
 }
 
 // Mirror of tryJump()
-function tryJump(hero) {
-  if (!heroOnGround(hero)) return false;
+function tryJump(hero, gameState) {
+  if (gameState !== STATE.RUNNING || !heroOnGround(hero)) return false;
   hero.vy = JUMP_VY;
   hero.animTime = 0;
   return true;
@@ -89,37 +87,43 @@ describe('Hero physics — ground state', () => {
 describe('Hero physics — jump initiation', () => {
   it('tryJump returns true when hero is on ground', () => {
     const hero = makeHero();
-    expect(tryJump(hero)).toBe(true);
+    expect(tryJump(hero, STATE.RUNNING)).toBe(true);
   });
 
   it('tryJump sets vy to JUMP_VY', () => {
     const hero = makeHero();
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     expect(hero.vy).toBe(JUMP_VY);
   });
 
   it('hero is not on ground immediately after a jump', () => {
     const hero = makeHero();
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     // After jump, hero still hasn't moved yet — vy is set but y unchanged.
     // One physics step will move the hero off the ground.
     updateHeroRunning(hero, 1 / 60);
     expect(heroOnGround(hero)).toBe(false);
   });
 
+  it('tryJump returns false (and leaves vy alone) when the game is not RUNNING', () => {
+    const hero = makeHero();
+    expect(tryJump(hero, STATE.DEAD)).toBe(false);
+    expect(hero.vy).toBe(0);
+  });
+
   it('tryJump returns false when hero is already in the air', () => {
     const hero = makeHero();
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     updateHeroRunning(hero, 1 / 60); // hero is now airborne
-    expect(tryJump(hero)).toBe(false);
+    expect(tryJump(hero, STATE.RUNNING)).toBe(false);
   });
 
   it('tryJump does not change vy if hero is already in the air', () => {
     const hero = makeHero();
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     updateHeroRunning(hero, 1 / 60); // airborne
     const vyBefore = hero.vy;
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     expect(hero.vy).toBe(vyBefore);
   });
 });
@@ -127,7 +131,7 @@ describe('Hero physics — jump initiation', () => {
 describe('Hero physics — mid-air update', () => {
   it('vy increases by GRAVITY * dt each step', () => {
     const hero = makeHero();
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     const vyBefore = hero.vy;
     const dt = 0.016;
     updateHeroRunning(hero, dt);
@@ -139,7 +143,7 @@ describe('Hero physics — mid-air update', () => {
   it('y decreases initially after a jump (hero moves upward)', () => {
     const hero = makeHero();
     const yBefore = hero.y;
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     updateHeroRunning(hero, 1 / 60);
     // JUMP_VY = -520, GRAVITY = 1500, dt = 1/60 ≈ 0.0167
     // vy_after_step = -520 + 1500*(1/60) = -520 + 25 = -495
@@ -149,7 +153,7 @@ describe('Hero physics — mid-air update', () => {
 
   it('hero reaches peak then descends (vy crosses zero)', () => {
     const hero = makeHero();
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     // Run many steps; at some point vy must flip from negative to positive.
     let crossedZero = false;
     let prevVy = hero.vy;
@@ -168,7 +172,7 @@ describe('Hero physics — mid-air update', () => {
 describe('Hero physics — landing', () => {
   it('hero lands exactly at HERO_GROUND_Y - HERO_H after a jump arc', () => {
     const hero = makeHero();
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     // Simulate the full arc until grounded.
     for (let i = 0; i < 300; i++) {
       updateHeroRunning(hero, 1 / 60);
@@ -179,7 +183,7 @@ describe('Hero physics — landing', () => {
 
   it('hero vy is 0 after landing', () => {
     const hero = makeHero();
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     for (let i = 0; i < 300; i++) {
       updateHeroRunning(hero, 1 / 60);
       if (heroOnGround(hero)) break;
@@ -189,7 +193,7 @@ describe('Hero physics — landing', () => {
 
   it('hero y never exceeds HERO_GROUND_Y - HERO_H (never goes below ground)', () => {
     const hero = makeHero();
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     for (let i = 0; i < 300; i++) {
       updateHeroRunning(hero, 1 / 60);
       expect(hero.y).toBeLessThanOrEqual(HERO_GROUND_Y - HERO_H);
@@ -220,7 +224,7 @@ describe('Hero physics — hitbox', () => {
   it('hitbox y moves up when hero jumps', () => {
     const hero = makeHero();
     const hbGround = heroHitbox(hero);
-    tryJump(hero);
+    tryJump(hero, STATE.RUNNING);
     // Advance a few ticks so hero rises.
     for (let i = 0; i < 10; i++) updateHeroRunning(hero, 1 / 60);
     const hbAir = heroHitbox(hero);

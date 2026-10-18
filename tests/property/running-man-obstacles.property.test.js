@@ -12,10 +12,10 @@
 
 import { describe, it } from 'vitest';
 import fc from 'fast-check';
-import { aabb } from '../../../public/games/running-man/obstacles.js';
+import { aabb } from '../../public/games/running-man/obstacles.js';
 import {
   OBSTACLE_TYPES, OBSTACLE_PATTERNS, W,
-} from '../../../public/games/running-man/config.js';
+} from '../../public/games/running-man/config.js';
 
 // ---------------------------------------------------------------------------
 // Pattern structural invariants

@@ -181,8 +181,21 @@ test.describe('Running Man — pause and resume', () => {
     await page.keyboard.press('p');
     await page.waitForFunction(() => window.__gameTest.getState() === 'paused');
     const distBefore = await readGameTest(page, 'getDistance');
-    // Since we cannot sleep, we verify that distance is still the same value
-    // after two evaluates in immediate succession.
+    // Distance must stay frozen across several animation frames while paused.
+    await page.waitForFunction(
+      async (expected) => {
+        const nextFrame = () =>
+          new Promise<number>((resolve) => {
+            requestAnimationFrame(() => resolve(window.__gameTest.getDistance()));
+          });
+        const reads = [await nextFrame(), await nextFrame(), await nextFrame()];
+        return (
+          window.__gameTest.getState() === 'paused' &&
+          reads.every((d) => d === expected)
+        );
+      },
+      distBefore,
+    );
     const distAfter = await readGameTest(page, 'getDistance');
     expect(distAfter).toBe(distBefore);
   });
@@ -250,11 +263,13 @@ test.describe('Running Man — death and best score', () => {
       timeout: 10_000,
     });
 
-    // localStorage best should now be >= 0 (game records the run distance).
+    // The run travelled >0 distance, so best must have been raised above the seeded 0
+    // and the hook must agree with what was persisted.
     const best = await page.evaluate(() =>
       Number(localStorage.getItem('running-man:best') || 0),
     );
-    expect(best).toBeGreaterThanOrEqual(0);
+    expect(best).toBeGreaterThan(0);
+    expect(await readGameTest(page, 'getBest')).toBe(best);
   });
 
   test('pressing R from dead state restarts the game', async ({ page }) => {
