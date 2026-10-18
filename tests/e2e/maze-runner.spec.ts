@@ -154,16 +154,15 @@ test.describe('Maze Runner gameplay — movement', () => {
       }
     }
 
-    if (closedKey === null) {
-      // Edge case: (0,0) has all 4 directions open (impossible for a corner cell
-      // in DFS — skip this test by treating it as vacuously passing).
-      return;
-    }
+    // N and W at (0,0) are out of bounds, so a closed wall always exists.
+    expect(closedKey).not.toBeNull();
 
     const before = await readGameTest(page, 'getPlayer');
-    await page.keyboard.press(closedKey);
-    // Small pause to let the frame process — no state change expected.
-    await page.waitForTimeout(80);
+    await page.keyboard.press(closedKey!);
+    // Let the game loop run two frames so a (buggy) move would have applied.
+    await page.evaluate(
+      () => new Promise<void>(res => requestAnimationFrame(() => requestAnimationFrame(() => res()))),
+    );
     const after = await readGameTest(page, 'getPlayer');
     expect(after).toEqual(before);
   });

@@ -182,6 +182,7 @@ describe('bfsPath', () => {
     const cols = 11, rows = 9;
     const maze = generateMaze(cols, rows, 'bfs-contiguous');
     const path = bfsPath(maze, 0, 0, cols - 1, rows - 1);
+    expect(path).not.toBeNull();
     for (let i = 1; i < path.length; i++) {
       const dc = Math.abs(path[i].col - path[i - 1].col);
       const dr = Math.abs(path[i].row - path[i - 1].row);
@@ -193,6 +194,7 @@ describe('bfsPath', () => {
     const cols = 11, rows = 9;
     const maze = generateMaze(cols, rows, 'bfs-walls');
     const path = bfsPath(maze, 0, 0, cols - 1, rows - 1);
+    expect(path).not.toBeNull();
     for (let i = 1; i < path.length; i++) {
       const from = path[i - 1];
       const to   = path[i];
@@ -216,6 +218,7 @@ describe('bfsPath', () => {
     const cols = 11, rows = 9;
     const maze = generateMaze(cols, rows, 'bfs-endpoints');
     const path = bfsPath(maze, 0, 0, cols - 1, rows - 1);
+    expect(path).not.toBeNull();
     expect(path[0]).toEqual({ col: 0, row: 0 });
     expect(path[path.length - 1]).toEqual({ col: cols - 1, row: rows - 1 });
   });

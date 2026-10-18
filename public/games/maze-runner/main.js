@@ -1185,7 +1185,7 @@ requestAnimationFrame(ts => {
 // contract for E2E tests; do not mutate state through it.
 // ---------------------------------------------------------------------------
 
-if (new URLSearchParams(location.search).has('test')) {
+if (new URLSearchParams(location.search).get('test') === '1') {
   window.__gameTest = {
     getState:    () => state,
     getDiff:     () => diffIdx,
