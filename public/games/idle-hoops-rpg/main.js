@@ -118,13 +118,16 @@ function doTick() {
     }
   }
 
-  rerender();
+  rerender(true);
   renderToasts(ensureToastContainer());
   return event;
 }
 
-function rerender() {
+// `background` = idle tick: patch the live DOM instead of rebuilding it, so a
+// focused textarea, text selection or in-flight click is not disturbed.
+function rerender(background = false) {
   render(state, {
+    background,
     paused,
     tickMs: TICK_MS,
     saveString: encodeSave(state),

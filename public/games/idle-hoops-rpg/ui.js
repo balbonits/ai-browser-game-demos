@@ -68,6 +68,8 @@ let _activeTab = 'roster';
 let _welcomeBackData = null;
 let _showResetConfirm = false;
 let _playerDetailIdx = null;
+let _lastOpts = {};
+let _saveString = null;
 
 // ---------------------------------------------------------------------------
 // Public surface
@@ -94,38 +96,154 @@ export function showWelcomeBack(data) {
 }
 
 /**
- * Idempotently re-render the entire UI from state.
- * Called after every state mutation.
+ * Idempotently re-render the UI from state. Called after every state mutation.
+ *
+ * Two modes:
+ *   - default: rebuild the whole tree (user actions: tab switch, modals, ...).
+ *   - `uiOpts.background === true` (the idle tick): reconcile the new tree into
+ *     the live DOM and touch only what changed. Untouched nodes (and their
+ *     focus, text selection, scroll position and in-flight clicks) survive, and
+ *     a focused <textarea> is never replaced.
+ *
  * @param {object} state - full SaveState
- * @param {object} uiOpts - { paused, tickMs, saveString }
+ * @param {object} uiOpts - { paused, tickMs, saveString, background }
  */
 export function render(state, uiOpts = {}) {
   _state = state;
   if (!_container) return;
 
-  _container.innerHTML = '';
+  const background = uiOpts.background === true;
+  const { background: _ignored, ...given } = uiOpts;
+  // Internal re-renders (render(_state, {})) reuse the last full options so the
+  // Pause label and save string do not reset.
+  const opts = Object.keys(given).length ? given : _lastOpts;
+  _lastOpts = opts;
+  _saveString = opts.saveString ?? null;
+
+  const prevBar = _container.querySelector('.tab-bar');
+  const prevTabLeft = prevBar ? prevBar.scrollLeft : null;
 
   // If state is null (corrupt / first boot before state is ready), show nothing.
-  if (!state) return;
+  if (!state) {
+    _container.innerHTML = '';
+    return;
+  }
 
-  const root = el('div', { className: 'app' },
-    renderHeader(state, uiOpts),
-    renderTabs(state, uiOpts),
-    renderTabContent(state, uiOpts),
-  );
-
-  _container.appendChild(root);
+  const next = [
+    el('div', { className: 'app' },
+      el('a', { className: 'back-link', href: '/', textContent: '\u2190 All games' }),
+      renderHeader(state, opts),
+      renderTabs(state, opts),
+      renderTabContent(state, opts),
+      renderFooter(),
+    ),
+  ];
 
   // Modals (on top).
   if (_welcomeBackData) {
-    _container.appendChild(renderWelcomeBackModal(_welcomeBackData));
+    next.push(renderWelcomeBackModal(_welcomeBackData));
   }
   if (_showResetConfirm) {
-    _container.appendChild(renderResetConfirmModal());
+    next.push(renderResetConfirmModal());
   }
   if (_playerDetailIdx !== null && state.roster[_playerDetailIdx]) {
-    _container.appendChild(renderPlayerDetailModal(state.roster[_playerDetailIdx], _playerDetailIdx));
+    next.push(renderPlayerDetailModal(state.roster[_playerDetailIdx], _playerDetailIdx));
   }
+
+  if (background && _container.firstChild) {
+    const host = document.createElement('div');
+    for (const n of next) host.appendChild(n);
+    patchChildren(_container, host);
+  } else {
+    _container.innerHTML = '';
+    for (const n of next) _container.appendChild(n);
+  }
+
+  afterRender(background, prevTabLeft);
+}
+
+// ---------------------------------------------------------------------------
+// Reconcile (background ticks)
+// ---------------------------------------------------------------------------
+
+// Classes added by script after render; ignored when comparing.
+const SCRIPT_CLASSES = ['fade-end'];
+
+function attrsEqual(a, b) {
+  const norm = (e, name) => {
+    const v = e.getAttribute(name) ?? '';
+    return name === 'class'
+      ? v.split(/\s+/).filter(c => c && !SCRIPT_CLASSES.includes(c)).join(' ')
+      : v;
+  };
+  const names = new Set([...a.getAttributeNames(), ...b.getAttributeNames()]);
+  for (const n of names) {
+    if (a.hasAttribute(n) !== b.hasAttribute(n) && n !== 'class') return false;
+    if (norm(a, n) !== norm(b, n)) return false;
+  }
+  return true;
+}
+
+function patchChildren(oldParent, newParent) {
+  const olds = Array.from(oldParent.childNodes);
+  const news = Array.from(newParent.childNodes);
+  const common = Math.min(olds.length, news.length);
+  for (let i = 0; i < common; i++) patchNode(olds[i], news[i]);
+  for (let i = common; i < olds.length; i++) olds[i].remove();
+  for (let i = common; i < news.length; i++) oldParent.appendChild(news[i]);
+}
+
+function patchNode(o, n) {
+  if (o.nodeType !== n.nodeType || o.nodeName !== n.nodeName) {
+    o.replaceWith(n);
+    return;
+  }
+  if (o.nodeType === 3) {
+    if (o.nodeValue !== n.nodeValue) o.nodeValue = n.nodeValue;
+    return;
+  }
+  if (o.nodeType !== 1) return;
+
+  if (o.nodeName === 'TEXTAREA') {
+    // Never replace a focused textarea: that drops focus, caret and selection.
+    if (o === document.activeElement) return;
+    if (!attrsEqual(o, n) || o.defaultValue !== n.defaultValue) o.replaceWith(n);
+    return;
+  }
+
+  // Event listeners live on the node that created them, so an element whose
+  // attributes changed is swapped for the fresh one; everything else is kept.
+  if (!attrsEqual(o, n)) {
+    o.replaceWith(n);
+    return;
+  }
+  patchChildren(o, n);
+}
+
+function updateTabFade(bar) {
+  bar.classList.toggle('fade-end', bar.scrollLeft + bar.clientWidth < bar.scrollWidth - 2);
+}
+
+function afterRender(background, prevTabLeft) {
+  const bar = _container.querySelector('.tab-bar');
+  if (!bar) return;
+  if (!background) {
+    // Bring the active tab into view (tab bar scrolls horizontally on phones).
+    const active = bar.querySelector('.tab-btn.active');
+    if (active) {
+      bar.scrollLeft = Math.max(0, active.offsetLeft - (bar.clientWidth - active.offsetWidth) / 2);
+    }
+  } else if (prevTabLeft !== null) {
+    bar.scrollLeft = prevTabLeft;
+  }
+  updateTabFade(bar);
+}
+
+function renderFooter() {
+  return el('footer', { className: 'site-footer' },
+    el('span', { textContent: 'Idle Hoops RPG \u00b7 built entirely by AI \u00b7 \u00a9 2026 John Dilig \u00b7 ' }),
+    el('a', { href: '/credits.html', textContent: 'Credits' }),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -190,7 +308,7 @@ const TABS = [
 ];
 
 function renderTabs(state) {
-  return el('nav', { className: 'tab-bar' },
+  return el('nav', { className: 'tab-bar', onScroll: (e) => updateTabFade(e.currentTarget) },
     ...TABS.map(t => {
       const disabled = t.id === 'offseason' && state.season.phase !== 'offseason';
       return el('button', {
@@ -441,7 +559,7 @@ function renderSettings(state, { saveString } = {}) {
           className: 'btn btn-ghost',
           textContent: 'Copy',
           onClick: () => {
-            navigator.clipboard?.writeText(state.seed).catch(() => {});
+            navigator.clipboard?.writeText(_state.seed).catch(() => {});
             _callbacks.onCopySettings?.('seed');
           },
         }),
@@ -461,7 +579,7 @@ function renderSettings(state, { saveString } = {}) {
           className: 'btn btn-ghost',
           textContent: 'Copy Save',
           onClick: () => {
-            if (ss) navigator.clipboard?.writeText(ss).catch(() => {});
+            if (_saveString) navigator.clipboard?.writeText(_saveString).catch(() => {});
             _callbacks.onCopySettings?.('save');
           },
         }),

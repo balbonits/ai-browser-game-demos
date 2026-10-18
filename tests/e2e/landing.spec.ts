@@ -65,6 +65,21 @@ test.describe('landing page game cards', () => {
     expect(src).toContain('/games/neon-tower-defense/thumb-wide.webp');
   });
 
+  test('Idle Hoops RPG spans the full last row (no orphan card) on desktop', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const last = page.locator('li[data-slug]').last();
+    await expect(last).toHaveAttribute('data-slug', 'idle-hoops-rpg');
+    const grid = await page.locator('ul:has(> li[data-slug])').boundingBox();
+    await last.scrollIntoViewIfNeeded();
+    const box = await last.boundingBox();
+    expect(box!.width).toBeGreaterThan(grid!.width * 0.95);
+    // Not the hero: only Neon Tower Defense is labelled Featured.
+    await expect(last).not.toContainText('Featured');
+    const src = await last.locator('img').evaluate((el: HTMLImageElement) => el.currentSrc);
+    expect(src).toContain('/games/idle-hoops-rpg/thumb-wide');
+  });
+
   test('thumbnails reserve their space (no layout shift) before loading', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 800 });
     await page.route('**/*.webp', (route) => route.abort());
