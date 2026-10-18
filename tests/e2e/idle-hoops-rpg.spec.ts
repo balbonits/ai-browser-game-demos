@@ -13,7 +13,7 @@ async function waitForGame(page: import('@playwright/test').Page) {
   await page.waitForFunction(() => Boolean((window as any).__gameTest));
 }
 
-test.describe('Idle Hoops RPG — E2E', () => {
+test.describe('Idle Hoops RPG â€” E2E', () => {
   // Navigate fresh before each test.
   test.beforeEach(async ({ page }) => {
     await page.goto(URL);
@@ -95,7 +95,7 @@ test.describe('Idle Hoops RPG — E2E', () => {
       (window as any).__gameTest.setLastTickAt(Date.now() - 60_000);
     });
 
-    // Reload — boot will apply catch-up.
+    // Reload â€” boot will apply catch-up.
     await page.reload();
     await waitForGame(page);
 
@@ -122,14 +122,14 @@ test.describe('Idle Hoops RPG — E2E', () => {
       localStorage.setItem(key, 'badhash:notbase64content!!');
     }, SAVE_KEY);
 
-    // Reload — should not crash, should start fresh.
+    // Reload â€” should not crash, should start fresh.
     await page.reload();
     await waitForGame(page);
 
     const state = await page.evaluate(() => (window as any).__gameTest.getState());
     expect(['playing', 'paused', 'offseason']).toContain(state);
 
-    // Fresh start ⇒ seasonsPlayed === 0 (stable across the first few ticks,
+    // Fresh start â‡’ seasonsPlayed === 0 (stable across the first few ticks,
     // unlike record.wins/losses which can advance under TICK_MS=100 in test
     // mode before we read).
     const decoded = await page.evaluate(() => (window as any).__gameTest.getDecoded());
@@ -333,7 +333,7 @@ test.describe('Idle Hoops RPG — E2E', () => {
       localStorage.setItem(args.key, args.save);
     }, { key: SAVE_KEY, save: V1_SAVE_STRING });
 
-    // Reload — boot should detect v1, migrate, and start normally.
+    // Reload â€” boot should detect v1, migrate, and start normally.
     await page.reload();
     await waitForGame(page);
 
@@ -388,7 +388,7 @@ test.describe('Idle Hoops RPG — E2E', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Tab navigation — real clicks, regression guard for the v0.1 bug where
+  // Tab navigation â€” real clicks, regression guard for the v0.1 bug where
   // every non-disabled tab silently received disabled="undefined" and swallowed
   // every click.
   // ---------------------------------------------------------------------------
@@ -430,5 +430,199 @@ test.describe('Idle Hoops RPG — E2E', () => {
       (el) => (el as HTMLButtonElement).hasAttribute('disabled'),
     );
     expect(isHtmlDisabled).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Idle tick must not disturb the UI (regression: the whole tree was rebuilt on
+// every tick, which dropped the Save-textarea selection and swallowed clicks).
+// In test mode the tick interval is 100ms, so ticks also fire on their own
+// while these assertions run.
+// ---------------------------------------------------------------------------
+
+test.describe('Idle Hoops RPG: tick re-render is non-destructive', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(URL);
+    await waitForGame(page);
+  });
+
+  test('a focused Save textarea keeps focus and its selection across ticks', async ({ page }) => {
+    await page.locator('.tab-btn', { hasText: 'Settings' }).click();
+    const ta = page.locator('.save-textarea');
+    await expect(ta).toBeVisible();
+    await ta.focus();
+    await ta.evaluate((el: HTMLTextAreaElement) => {
+      (el as any).__mark = 'same-node';
+      el.setSelectionRange(5, 25);
+    });
+
+    await page.evaluate(() => (window as any).__gameTest.triggerTick(5));
+    await page.waitForTimeout(350); // plus ~3 automatic ticks
+
+    const after = await ta.evaluate((el: HTMLTextAreaElement) => ({
+      mark: (el as any).__mark,
+      active: document.activeElement === el,
+      start: el.selectionStart,
+      end: el.selectionEnd,
+    }));
+    expect(after).toEqual({ mark: 'same-node', active: true, start: 5, end: 25 });
+  });
+
+  test('unchanged elements are kept (not rebuilt) across ticks', async ({ page }) => {
+    await page.evaluate(() => {
+      for (const sel of ['.header .btn', '.player-card', '.tab-btn']) {
+        (document.querySelector(sel) as any).__mark = sel;
+      }
+    });
+    await page.evaluate(() => (window as any).__gameTest.triggerTick(5));
+    await page.waitForTimeout(250);
+    const marks = await page.evaluate(() =>
+      ['.header .btn', '.player-card', '.tab-btn'].map((s) => (document.querySelector(s) as any).__mark),
+    );
+    expect(marks).toEqual(['.header .btn', '.player-card', '.tab-btn']);
+  });
+
+  test('the displayed values still update on a tick', async ({ page }) => {
+    const before = await page.locator('.phase-pill').textContent();
+    await page.evaluate(() => (window as any).__gameTest.triggerTick(3));
+    await expect(page.locator('.phase-pill')).not.toHaveText(before!);
+  });
+
+  test('a click that straddles ticks still lands (Pause button)', async ({ page }) => {
+    const btn = page.locator('.header .btn', { hasText: 'Pause' });
+    const box = (await btn.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.evaluate(() => (window as any).__gameTest.triggerTick(3));
+    await page.waitForTimeout(250);
+    await page.mouse.up();
+    expect(await page.evaluate(() => (window as any).__gameTest.getState())).toBe('paused');
+    await expect(page.locator('.header .btn', { hasText: 'Resume' })).toBeVisible();
+  });
+
+  test('Copy Save uses the latest save string, not a stale one', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.locator('.tab-btn', { hasText: 'Settings' }).click();
+    await page.evaluate(() => (window as any).__gameTest.triggerTick(4));
+    await page.waitForTimeout(250);
+    await page.locator('.btn', { hasText: 'Copy Save' }).click();
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    // The game keeps ticking, so compare the format and the seed rather than bytes.
+    expect(copied).toMatch(/^[0-9a-f]{8}:.+$/);
+    const seed = await page.evaluate(() => (window as any).__gameTest.getSeed());
+    const decoded = JSON.parse(Buffer.from(copied.split(':')[1], 'base64').toString('utf8'));
+    expect(decoded.seed).toBe(seed);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Layout spec (Design Director): phones, touch targets, contrast, navigation.
+// ---------------------------------------------------------------------------
+
+test.describe('Idle Hoops RPG: layout at 390px', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(URL);
+    await waitForGame(page);
+  });
+
+  test('no horizontal overflow on any tab', async ({ page }) => {
+    for (const label of ['Roster', 'Schedule', 'Standings', 'Shop', 'Achievements', 'Settings']) {
+      await page.locator('.tab-btn', { hasText: label }).click();
+      const over = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(over, label).toBeLessThanOrEqual(0);
+      const appW = await page.locator('.app').evaluate((el) => el.getBoundingClientRect().width);
+      expect(appW, label).toBeLessThanOrEqual(390);
+    }
+  });
+
+  test('player and achievement grids are two columns', async ({ page }) => {
+    const cols = async (sel: string) =>
+      page.locator(sel).evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length);
+    expect(await cols('.player-grid')).toBe(2);
+    await page.locator('.tab-btn', { hasText: 'Achievements' }).click();
+    expect(await cols('.achievement-grid')).toBe(2);
+  });
+
+  test('buttons and tabs are at least 44px tall', async ({ page }) => {
+    const h = (loc: import('@playwright/test').Locator) =>
+      loc.first().evaluate((el) => el.getBoundingClientRect().height);
+    expect(await h(page.locator('.header .btn'))).toBeGreaterThanOrEqual(44);
+    expect(await h(page.locator('.tab-btn'))).toBeGreaterThanOrEqual(44);
+    await page.locator('.tab-btn', { hasText: 'Shop' }).click();
+    expect(await h(page.locator('.upgrade-buy'))).toBeGreaterThanOrEqual(44);
+  });
+
+  test('toasts are anchored to the top on phones', async ({ page }) => {
+    const pos = await page.locator('.toast-container').evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { top: cs.top, bottom: cs.bottom };
+    });
+    expect(parseFloat(pos.top)).toBeLessThan(20);
+  });
+
+  test('tab bar fades at the right edge and scrolls the active tab into view', async ({ page }) => {
+    const bar = page.locator('.tab-bar');
+    await expect(bar).toHaveClass(/fade-end/);
+    await page.locator('.tab-btn', { hasText: 'Settings' }).click();
+    const tab = page.locator('.tab-btn.active');
+    await expect(tab).toHaveText('Settings');
+    const inView = await page.evaluate(() => {
+      const b = document.querySelector('.tab-bar')!.getBoundingClientRect();
+      const t = document.querySelector('.tab-btn.active')!.getBoundingClientRect();
+      return t.left >= b.left - 1 && t.right <= b.right + 1;
+    });
+    expect(inView).toBe(true);
+    await expect(bar).not.toHaveClass(/fade-end/); // scrolled to the end: nothing more to hint at
+  });
+});
+
+test.describe('Idle Hoops RPG: layout and navigation (desktop)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(URL);
+    await waitForGame(page);
+  });
+
+  test('.app is 900px wide and centered on desktop', async ({ page }) => {
+    const box = (await page.locator('.app').boundingBox())!;
+    expect(Math.round(box.width)).toBe(900);
+    expect(Math.round(box.x)).toBe(190);
+  });
+
+  test('has an "All games" link home and a credits footer', async ({ page }) => {
+    const back = page.locator('a.back-link');
+    await expect(back).toHaveText('\u2190 All games');
+    await expect(back).toHaveAttribute('href', '/');
+    const footer = page.locator('footer.site-footer');
+    await expect(footer).toContainText('built entirely by AI');
+    await expect(footer.locator('a')).toHaveAttribute('href', '/credits.html');
+  });
+
+  test('muted text and the phase pill meet 4.5:1 contrast', async ({ page }) => {
+    await page.locator('.tab-btn', { hasText: 'Schedule' }).click();
+    const ratios = await page.evaluate(() => {
+      const parse = (c: string) => (c.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+      const lum = ([r, g, b]: number[]) => {
+        const f = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+        return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+      };
+      const ratio = (fg: string, bg: string) => {
+        const [a, b] = [lum(parse(fg)), lum(parse(bg))].sort((x, y) => y - x);
+        return (a + 0.05) / (b + 0.05);
+      };
+      const pill = document.querySelector('.phase-pill')!;
+      const muted = document.querySelector('.muted-text')!;
+      const card = getComputedStyle(document.body).backgroundColor;
+      return {
+        pill: ratio(getComputedStyle(pill).color, getComputedStyle(pill).backgroundColor),
+        muted: ratio(getComputedStyle(muted).color, card),
+      };
+    });
+    expect(ratios.pill).toBeGreaterThanOrEqual(4.5);
+    expect(ratios.muted).toBeGreaterThanOrEqual(4.5);
   });
 });

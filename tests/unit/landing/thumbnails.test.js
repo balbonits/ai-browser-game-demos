@@ -35,8 +35,10 @@ function webpSize(buf) {
 
 describe('game card thumbnails', () => {
   it('registers a thumbnail for every game at the conventional path', () => {
+    // thumb.webp, or a cache-busting rename such as thumb-v2.webp (vercel.json
+    // serves thumbnails as immutable for a year, so replacements get new names).
     for (const g of GAMES) {
-      expect(g.thumb, g.slug).toBe(`/games/${g.slug}/thumb.webp`);
+      expect(g.thumb, g.slug).toMatch(new RegExp(`^/games/${g.slug}/thumb(-[a-z0-9]+)*\\.webp$`));
     }
   });
 
@@ -58,12 +60,33 @@ describe('game card thumbnails', () => {
     }
   });
 
-  it('has exactly one featured game, with a 1280x549 wide crop <=100KB', () => {
-    const featured = GAMES.filter((g) => g.featured);
-    expect(featured.map((g) => g.slug)).toEqual(['neon-tower-defense']);
-    const file = fileFor(featured[0].thumbWide);
-    expect(statSync(file).size).toBeLessThanOrEqual(MAX_BYTES);
-    expect(webpSize(readFileSync(file))).toEqual({ w: 1280, h: 549 });
+  it('has exactly one featured game', () => {
+    expect(GAMES.filter((g) => g.featured).map((g) => g.slug)).toEqual(['neon-tower-defense']);
+  });
+
+  it('every featured or wide game has a 1280x549 wide crop <=100KB', () => {
+    const wide = GAMES.filter((g) => g.featured || g.wide);
+    expect(wide.map((g) => g.slug)).toEqual(['neon-tower-defense', 'idle-hoops-rpg']);
+    for (const g of wide) {
+      expect(g.thumbWide, g.slug).toBeTruthy();
+      const file = fileFor(g.thumbWide);
+      expect(statSync(file).size, g.slug).toBeLessThanOrEqual(MAX_BYTES);
+      expect(webpSize(readFileSync(file)), g.slug).toEqual({ w: 1280, h: 549 });
+    }
+  });
+
+  it('leaves no orphan card: the last desktop row is full', () => {
+    // Desktop grid has 2 columns; featured and wide cards take both.
+    const span = (g) => (g.featured || g.wide ? 2 : 1);
+    const rows = [];
+    let used = 0;
+    for (const g of GAMES) {
+      const s = span(g);
+      if (used + s > 2) { rows.push(used); used = 0; }
+      used += s;
+    }
+    rows.push(used);
+    expect(rows.at(-1)).toBe(2);
   });
 
   it('ships a 1200x630 og.png and references it from index.html', () => {

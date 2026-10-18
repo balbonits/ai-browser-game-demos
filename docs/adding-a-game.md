@@ -75,6 +75,7 @@ Every game needs a card thumbnail (enforced by `tests/unit/landing/thumbnails.te
 - `public/games/<slug>/thumb.webp`, **960x540** (16:9) WebP, **<= 100 KB** (aim for ~60 KB; lower quality to ~70 before shrinking). Capture real gameplay at 1280x720 with no browser chrome, cursor, modals or toasts, then export (`cwebp -q 80 -resize 960 540 in.png -o thumb.webp`, or `sharp`).
 - `thumbAlt`: one short sentence, <= 125 characters, starting with `<Title>:`; describe what is visible; no "screenshot of", no marketing; unique per game.
 - Optional hero: set `featured: true` and add a 1280x549 (21:9) `thumbWide` crop. The featured game is shown first, spanning the full grid width.
+- Optional `wide: true` (also needs `thumbWide`): span the full grid row without the "Featured" treatment. Use it so an odd last card does not sit alone in a row (the desktop grid has two columns; `tests/unit/landing/thumbnails.test.js` checks the last row is full).
 - `vercel.json` serves `/games/**.webp` as `immutable` for a year. When you replace an existing thumbnail, rename the file (e.g. `thumb-2.webp`) and update `thumb`, otherwise returning visitors keep the old image.
 - Link previews use `public/og.png` (1200x630, `og:image` / `twitter:image` in `index.html`). Regenerate it when the set of games changes.
 
