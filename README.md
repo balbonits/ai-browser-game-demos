@@ -82,7 +82,7 @@ Games are plain static files over HTTP; opening a game's `index.html` via `file:
 
 ## Testing
 
-Four tiers, described in detail in [`docs/testing.md`](docs/testing.md). Currently Neon Blocks and Idle Hoops RPG have per-game tests; the other games have none yet.
+Tests run locally (npm scripts plus the Husky pre-push hook); there is no cloud CI by design. Four tiers, described in detail in [`docs/testing.md`](docs/testing.md). Currently Neon Blocks and Idle Hoops RPG have per-game tests; the other games have none yet.
 
 ```sh
 npm test                # unit + replay + property + e2e

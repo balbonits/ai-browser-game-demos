@@ -34,7 +34,7 @@ Don't conflate the two — the rules below differ for each.
 
 - Node 22. `npm install`, then `npm run dev` (Vite at <http://localhost:5173>).
 - `npm test` = unit + replay + property + e2e (`test:unit`, `test:property`, `test:e2e`, `test:watch`). E2E needs `npx playwright install chromium` once.
-- A Husky pre-push hook runs `npm test` before every push. Details in [`docs/testing.md`](docs/testing.md).
+- There is no cloud CI; tests run locally. A Husky pre-push hook runs `npm test` before every push. Details in [`docs/testing.md`](docs/testing.md).
 
 ## Adding a new game
 

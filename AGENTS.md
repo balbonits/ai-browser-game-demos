@@ -64,7 +64,7 @@ LICENSE, LICENSE-ASSETS # repo-root, served via vite plugin
 
 - Node 22 (what the repo is developed on). `npm install`, then `npm run dev` (Vite, <http://localhost:5173>).
 - `npm test` runs unit + replay + property + e2e; sub-scripts are `test:unit`, `test:property`, `test:e2e`, `test:watch`. E2E needs `npx playwright install chromium` once.
-- A Husky pre-push hook runs `npm test` on every `git push`. See [`docs/testing.md`](docs/testing.md).
+- There is no cloud CI; tests run locally. A Husky pre-push hook runs `npm test` on every `git push`. See [`docs/testing.md`](docs/testing.md).
 
 ## Workflow for adding a game
 
