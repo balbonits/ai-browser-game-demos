@@ -13,7 +13,7 @@ export type Game = {
   tags: string[];
   /** Short alt text for the card thumbnail (<=125 chars, starts with the title). */
   thumbAlt: string;
-  /** Card thumbnail, 960x540 (16:9), at public/games/<slug>/thumb.webp. */
+  /** Card thumbnail, 960x540 (16:9), at public/games/<slug>/thumb[-suffix].webp. */
   thumb: string;
   /** Featured game: shown first as a full-width hero card. */
   featured?: boolean;
@@ -42,10 +42,11 @@ export const GAMES: Game[] = [
     description:
       'Shape-based tower defense, neon CRT aesthetic. Every visual is geometry, every sound is synthesized.',
     tags: ['Vanilla JS', 'Canvas2D', 'Web Audio'],
-    thumb: '/games/neon-tower-defense/thumb.webp',
+    // thumb-v3 / thumb-wide-v3: three towers placed at a bend, enemies mid-path, readable buy buttons (new names bust the immutable cache).
+    thumb: '/games/neon-tower-defense/thumb-v3.webp',
     thumbAlt:
-      'Neon Tower Defense: red enemies advance along a glowing cyan path above the tower build bar.',
-    thumbWide: '/games/neon-tower-defense/thumb-wide.webp',
+      'Neon Tower Defense: bolt, pulse and spike towers firing on red squares along a glowing path, above the tower buy buttons.',
+    thumbWide: '/games/neon-tower-defense/thumb-wide-v3.webp',
     featured: true,
   },
   {

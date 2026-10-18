@@ -97,6 +97,27 @@ canvas {
   padding: 0.2rem 0.5rem;
 }
 
+/* The tower buttons are drawn in the canvas, centered in the bottom strip
+   (they start 28% of the way across). Keep the hint, which is an HTML overlay
+   with a fixed font size, out of their way: wrap it in the space to their left
+   on wide screens, and on narrow screens (where the canvas is scaled down but
+   the text is not) float it just above the button strip, centered. */
+.hint {
+  max-width: 26%;
+  line-height: 1.25;
+}
+@media (max-width: 700px) {
+  .hud-bottom {
+    bottom: 27%; /* the strip starts 24% up from the canvas bottom */
+    justify-content: center;
+  }
+  .hint {
+    max-width: 100%;
+    text-align: center;
+    font-size: 0.7rem;
+  }
+}
+
 .sound-toggle {
   pointer-events: auto;
   background: rgba(5, 6, 12, 0.55);
