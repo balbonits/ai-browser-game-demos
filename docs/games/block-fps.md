@@ -134,7 +134,7 @@ Enemy AI: each frame, project the world-space vector to the player onto XZ, norm
 - `kinds` is the random pool drawn from per spawn (so `['grunt', 'grunt', 'charger']` weights grunts 2/3).
 - `max` caps simultaneously-alive enemies — prevents the screen from piling up if the player struggles.
 
-Wave clears when the budget is exhausted AND the field is empty. After wave 8, the last template loops in **endless mode** with multipliers: `+20%` HP per endless wave (no cap) and `+10%` count. The HUD wave label switches from `WAVE NN` to `WAVE NN ∞`.
+Wave clears when the budget is exhausted AND the field is empty. After wave 8, the last template loops in **endless mode** with multipliers: `+20%` HP per endless wave (no cap) and `+10%` count. The HUD wave label shows the wave in progress (or the last one cleared between waves, `WAVE 0` before the first) and switches from `WAVE NN` to `WAVE NN ∞`.
 
 ### Persistence
 
