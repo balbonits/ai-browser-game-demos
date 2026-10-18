@@ -3,6 +3,11 @@ import GameCard from '@/components/site/GameCard';
 
 export default function Home() {
   const count = GAMES.length;
+  // Featured game(s) first (full-width hero card); Array#sort is stable, so the
+  // remaining games keep their registry order.
+  const ordered = [...GAMES].sort(
+    (a, b) => Number(b.featured === true) - Number(a.featured === true),
+  );
 
   return (
     <div className="mx-auto max-w-[1120px] px-10 py-20 max-[720px]:px-4 max-[720px]:py-12">
@@ -56,7 +61,7 @@ export default function Home() {
           </p>
         ) : (
           <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 list-none p-0 m-0">
-            {GAMES.map((g) => (
+            {ordered.map((g) => (
               <GameCard key={g.slug} game={g} />
             ))}
           </ul>

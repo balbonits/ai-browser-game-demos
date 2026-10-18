@@ -71,7 +71,7 @@ LICENSE, LICENSE-ASSETS # repo-root, served via vite plugin
 1. Pick a short kebab-case slug (e.g. `asteroid-sweep`).
 2. Create `public/games/<slug>/index.html` with a minimal shell and any sibling files it needs.
 3. Generate art via PixelLab MCP (characters, tilesets, etc.) and save under top-level category folders inside the game folder.
-4. Add an entry to `GAMES` in `src/data/games.ts` with `slug`, `title`, `year`, `kind`, `description`, `tags`.
+4. Add an entry to `GAMES` in `src/data/games.ts` with `slug`, `title`, `year`, `kind`, `description`, `tags`, `thumb`, `thumbAlt` (plus the 960x540 `public/games/<slug>/thumb.webp`; see [`docs/adding-a-game.md`](docs/adding-a-game.md#card-thumbnail)).
 5. Test by running `npm run dev` and clicking through; run `npm test` (add tests per [`docs/testing.md`](docs/testing.md)).
 6. Add `docs/games/<slug>.md`.
 

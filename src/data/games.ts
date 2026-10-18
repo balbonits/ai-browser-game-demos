@@ -11,6 +11,14 @@ export type Game = {
   kind: string;
   description: string;
   tags: string[];
+  /** Short alt text for the card thumbnail (<=125 chars, starts with the title). */
+  thumbAlt: string;
+  /** Card thumbnail, 960x540 (16:9), at public/games/<slug>/thumb.webp. */
+  thumb: string;
+  /** Featured game: shown first as a full-width hero card. */
+  featured?: boolean;
+  /** Optional wide (21:9, 1280x549) crop used by the hero card on wide screens. */
+  thumbWide?: string;
 };
 
 export const GAMES: Game[] = [
@@ -22,6 +30,9 @@ export const GAMES: Game[] = [
     description:
       'A side-scrolling auto-runner. Jump to clear obstacles, beat your distance.',
     tags: ['Vanilla JS', 'Canvas2D', 'PixelLab', 'Web Audio'],
+    thumb: '/games/running-man/thumb.webp',
+    thumbAlt:
+      'Running Man: a pixel runner on a dusk road in front of pine forest, mountains and clouds.',
   },
   {
     slug: 'neon-tower-defense',
@@ -31,6 +42,11 @@ export const GAMES: Game[] = [
     description:
       'Shape-based tower defense, neon CRT aesthetic. Every visual is geometry, every sound is synthesized.',
     tags: ['Vanilla JS', 'Canvas2D', 'Web Audio'],
+    thumb: '/games/neon-tower-defense/thumb.webp',
+    thumbAlt:
+      'Neon Tower Defense: red enemies advance along a glowing cyan path above the tower build bar.',
+    thumbWide: '/games/neon-tower-defense/thumb-wide.webp',
+    featured: true,
   },
   {
     slug: 'block-fps',
@@ -40,6 +56,9 @@ export const GAMES: Game[] = [
     description:
       'First-person shooter with a polygonal gun and 3D block enemies.',
     tags: ['Three.js', 'WebGL', 'Web Audio'],
+    thumb: '/games/block-fps/thumb.webp',
+    thumbAlt:
+      'Block Arena: first-person view of a dark wireframe arena with red block enemies and a cyan gun.',
   },
   {
     slug: 'maze-runner',
@@ -49,6 +68,9 @@ export const GAMES: Game[] = [
     description:
       'Procedurally generated mazes seeded by a string or number. Race the clock, collect gems.',
     tags: ['Vanilla JS', 'Canvas2D', 'Procedural', 'Web Audio'],
+    thumb: '/games/maze-runner/thumb.webp',
+    thumbAlt:
+      'Maze Runner: a glowing maze with yellow gems, plus the seed and timer along the top.',
   },
   {
     slug: 'neon-blocks',
@@ -58,6 +80,9 @@ export const GAMES: Game[] = [
     description:
       'Modern falling-block puzzle with SRS rotation, T-spins, hold, ghost piece, and layered synthesized music that grows with your level.',
     tags: ['Vanilla JS', 'Canvas2D', 'Web Audio'],
+    thumb: '/games/neon-blocks/thumb.webp',
+    thumbAlt:
+      'Neon Blocks: a neon falling-block board half full, with hold and next-piece panels.',
   },
   {
     slug: 'idle-hoops-rpg',
@@ -67,5 +92,8 @@ export const GAMES: Game[] = [
     description:
       'Idle basketball career sim with single-string hashed save and offline catch-up.',
     tags: ['Vanilla JS', 'DOM UI', 'localStorage', 'Idle'],
+    thumb: '/games/idle-hoops-rpg/thumb.webp',
+    thumbAlt:
+      'Idle Hoops RPG: team dashboard showing the record, money and a roster with orange stat bars.',
   },
 ];
