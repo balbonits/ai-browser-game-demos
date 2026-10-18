@@ -159,6 +159,7 @@ The game exposes a read-only debug hook on `window.__gameTest` when loaded with 
 | `getElapsed()` | Elapsed seconds since run start (number); `0` until first move |
 | `getStartTs()` | `performance.now()` timestamp of first move, or `null` |
 | `getPromptActive()` | `true` when the custom-seed prompt dialog is open |
+| `getHudLayout()` | `{ rightLeft, rightRight, canvasWidth }`: bounds (canvas px) of the HUD's right-hand label as last drawn; used to assert it clears the sound button |
 
 All accessors return copies, never live references. The hook is read-only; it cannot mutate game state.
 
