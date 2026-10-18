@@ -57,7 +57,7 @@ function runScenario({ enemyCount, frames, dt, baseProgress = 0 }) {
   resetEnemies();
   resetProjectiles();
 
-  buildTower('bolt', 3, 1);
+  expect(buildTower('bolt', 3, 1)).not.toBeNull();
 
   for (let i = 0; i < enemyCount; i++) {
     const e = spawnEnemy('square');

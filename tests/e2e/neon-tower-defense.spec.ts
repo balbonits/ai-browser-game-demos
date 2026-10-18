@@ -113,17 +113,9 @@ test.describe('Neon Tower Defense — wave start', () => {
     expect(await readGameTest(page, 'getState')).toBe('running');
   });
 
-  test('wave counter advances after wave starts', async ({ page }) => {
-    // Before: wave=0, after starting: internally wave+1 is active but game.wave
-    // still equals 0 (increments only on wave clear). During running, the wave
-    // being fought is game.wave+1, but getWave() returns game.wave.
-    // After wave clears, getWave() will be 1.
-    // For this test we just confirm it's > 0 after a full clear, which takes
-    // too long. Instead, confirm that Space starts the run (wave stays 0
-    // until cleared).
+  test('wave counter does not increment on wave start (only on clear)', async ({ page }) => {
     await page.keyboard.press('Space');
     await page.waitForFunction(() => window.__gameTest.getState() === 'running');
-    // game.wave is still 0 (it increments on clear, not on start).
     expect(await readGameTest(page, 'getWave')).toBe(0);
   });
 

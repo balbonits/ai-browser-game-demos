@@ -57,11 +57,11 @@ describe('waves — startWave', () => {
     startWave(endlessWave);
     expect(isWaveActive()).toBe(true);
     expect(currentWaveIndex()).toBe(endlessWave);
-    // Template reuse is internal state — verify indirectly via spawning behavior:
-    // updateWaves with zero dt should not spawn (timer=0 → instant first spawn).
-    // Just verify no crash and still active.
+    // Timer starts at 0, so the first spawn happens immediately even with dt=0;
+    // its kind identifies the template in use.
     updateWaves(0);
-    expect(isWaveActive()).toBe(true);
+    expect(enemies.length).toBe(1);
+    expect(enemies[0].kind).toBe(WAVES[expectedTemplate][0].kind);
   });
 });
 
@@ -168,20 +168,18 @@ describe('waves — endless multiplier', () => {
     startWave(TOTAL_WAVES);
     // First spawn should have base HP (wave 1 template = WAVES[11]).
     updateWaves(0);
-    if (enemies.length > 0) {
-      const kind = enemies[0].kind;
-      expect(enemies[0].hp).toBe(ENEMIES[kind].hp);
-    }
+    expect(enemies.length).toBeGreaterThanOrEqual(1);
+    const kind = enemies[0].kind;
+    expect(enemies[0].hp).toBe(ENEMIES[kind].hp);
   });
 
   it('uses scaled HP multiplier in endless mode', () => {
     // Wave TOTAL_WAVES + 1: over=1, hp multiplier = 1 + 1*0.30 = 1.30
     startWave(TOTAL_WAVES + 1);
     updateWaves(0);
-    if (enemies.length > 0) {
-      const kind = enemies[0].kind;
-      const expectedHp = Math.max(1, Math.round(ENEMIES[kind].hp * 1.30));
-      expect(enemies[0].hp).toBe(expectedHp);
-    }
+    expect(enemies.length).toBeGreaterThanOrEqual(1);
+    const kind = enemies[0].kind;
+    const expectedHp = Math.max(1, Math.round(ENEMIES[kind].hp * 1.30));
+    expect(enemies[0].hp).toBe(expectedHp);
   });
 });
