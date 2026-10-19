@@ -28,3 +28,4 @@ Game docs are listed here in chronological order of when they were started. Upda
 - [`block-fps.md`](block-fps.md) — first-person shooter, 3D, polygonal gun, block enemies, Three.js via CDN.
 - [`maze-runner.md`](maze-runner.md) — top-down procedural maze runner, recursive-backtracker DFS, seeded RNG, fog of war, gem collectibles, minimap (no PixelLab, no audio files).
 - [`neon-blocks.md`](neon-blocks.md) — Tetris-style falling-block puzzle, SRS rotation, T-spins, 7-bag, three modes (Marathon/Sprint/Daily), layered synth music (no PixelLab, no audio files).
+- [`idle-hoops-rpg.md`](idle-hoops-rpg.md) — idle/incremental pro-basketball career sim, team management across seasons, playoffs and the off-season, offline catch-up, whole save is one hashed base64 localStorage string (vanilla JS, DOM UI, no build step, emoji portraits).
