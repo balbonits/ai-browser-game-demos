@@ -43,7 +43,8 @@ import { W as CANVAS_W, H as CANVAS_H } from './config.js';
 // Declared here so the hook closure captures the live module bindings.
 // Each accessor is a function so it reads the *current* value, not a snapshot.
 // Returns copies (Array.from, slice) so the test cannot corrupt game state.
-if (new URLSearchParams(location.search).has('test')) {
+// Strict: only the exact value `?test=1` enables the hook (not `?test`, `?test=0`, `?test=true`, ...).
+if (new URLSearchParams(location.search).get('test') === '1') {
   window.__gameTest = {
     getState: () => gameState,
     getMode:  () => selectedMode,

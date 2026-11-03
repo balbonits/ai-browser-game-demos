@@ -36,7 +36,8 @@ import {
 // Read-only surface for E2E tests. Returns copies — never live references.
 // Add accessors here when tests need more game state.
 
-if (new URLSearchParams(location.search).has('test')) {
+// Strict: only the exact value `?test=1` enables the hook (not `?test`, `?test=0`, `?test=true`, ...).
+if (new URLSearchParams(location.search).get('test') === '1') {
   window.__gameTest = {
     getState:       () => game.state,
     getWave:        () => game.wave,
