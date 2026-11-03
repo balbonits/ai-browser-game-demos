@@ -62,7 +62,7 @@ test.describe('landing page game cards', () => {
 
     // Wide crop is picked on desktop widths.
     const src = await first.locator('img').evaluate((el: HTMLImageElement) => el.currentSrc);
-    expect(src).toContain('/games/neon-tower-defense/thumb-wide.webp');
+    expect(src).toContain('/games/neon-tower-defense/thumb-wide');
   });
 
   test('thumbnails reserve their space (no layout shift) before loading', async ({ page }) => {

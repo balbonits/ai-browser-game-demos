@@ -12,7 +12,7 @@ import {
 import { AudioEngine } from './audio.js';
 import { pickTile, buildable } from './map.js';
 import {
-  drawBackground, drawPath, drawHudStrip, drawTowerButtons, buttonHitTest,
+  drawBackground, drawPath, drawHudStrip, drawTowerButtons, buttonHitTest, towerButtonLayout,
   drawCenteredOverlay, drawRangeCircle, rgba, roundRect,
   updateParticles, drawParticles, clearParticles, spawnBurst,
 } from './render.js';
@@ -46,6 +46,7 @@ if (new URLSearchParams(location.search).has('test')) {
     getEnemies:     () => enemies.map(e => ({ kind: e.kind, hp: e.hp, x: e.x, y: e.y })),
     getProjectiles: () => projectiles.map(p => ({ x: p.x, y: p.y })),
     getBest:        () => Number(localStorage.getItem(STORAGE.BEST) || 0),
+    getTowerButtons: () => towerButtonLayout(TOWER_KEYS.length),
   };
 }
 

@@ -4,7 +4,7 @@
 // the test hook — never through canvas pixels.
 // Never use waitForTimeout — always waitForFunction for state changes.
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { waitForGameTest, readGameTest } from '../shared/test-hooks.js';
 
 const GAME_URL = '/games/neon-tower-defense/index.html?test=1';
@@ -205,6 +205,146 @@ test.describe('Neon Tower Defense — mute', () => {
     const muted = await page.evaluate(() => localStorage.getItem('neon-td:muted'));
     expect(muted).toBe('1');
   });
+});
+
+// ---------------------------------------------------------------------------
+// Tower buttons (bottom strip): name and cost must not overlap
+// ---------------------------------------------------------------------------
+//
+// The buttons are drawn into the canvas, so the DOM can't tell us where the
+// text landed. An init script wraps CanvasRenderingContext2D.fillText and, for
+// every string drawn in the bottom strip, records the real ink bounding box
+// (measureText actualBoundingBox*) in canvas pixels. The test then asserts on
+// what the game actually drew, so it fails on the old layout (cost text drawn
+// over the tower name).
+
+type TextBox = { text: string; left: number; right: number; top: number; bottom: number };
+
+const BUTTON_SPECS = [
+  { name: 'BOLT', cost: '¢40' },
+  { name: 'PULSE', cost: '¢80' },
+  { name: 'SPIKE', cost: '¢100' },
+];
+
+async function installFillTextRecorder(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __fillTextLog: Record<string, unknown> };
+    w.__fillTextLog = {};
+    const orig = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text: string, x: number, y: number, ...rest: [number?]) {
+      if (y > 200) {
+        // Bottom strip only (tower buttons). Keep the latest box per string.
+        const m = this.measureText(text);
+        w.__fillTextLog[text] = {
+          text,
+          left: x - m.actualBoundingBoxLeft,
+          right: x + m.actualBoundingBoxRight,
+          top: y - m.actualBoundingBoxAscent,
+          bottom: y + m.actualBoundingBoxDescent,
+        };
+      }
+      return orig.call(this, text, x, y, ...rest);
+    };
+  });
+}
+
+async function readTextBoxes(page: Page): Promise<Record<string, TextBox>> {
+  await page.waitForFunction(
+    () => {
+      const log = (window as unknown as { __fillTextLog: Record<string, unknown> }).__fillTextLog;
+      return ['BOLT', 'PULSE', 'SPIKE', '¢40', '¢80', '¢100'].every((t) => t in log);
+    },
+  );
+  return page.evaluate(() => (window as unknown as { __fillTextLog: Record<string, TextBox> }).__fillTextLog);
+}
+
+const overlaps = (a: TextBox, b: TextBox) =>
+  a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+test.describe('Neon Tower Defense — tower buttons layout', () => {
+  test.beforeEach(async ({ page }) => {
+    await installFillTextRecorder(page);
+    await page.goto(GAME_URL);
+    await waitForGameTest(page);
+  });
+
+  test('tower name and cost text do not overlap (name sits above the cost)', async ({ page }) => {
+    const boxes = await readTextBoxes(page);
+    for (const { name, cost } of BUTTON_SPECS) {
+      const n = boxes[name];
+      const c = boxes[cost];
+      expect(overlaps(n, c), `${name} box ${JSON.stringify(n)} overlaps ${cost} box ${JSON.stringify(c)}`).toBe(false);
+      // Name on its own line, cost beneath it.
+      expect(c.top - n.bottom, `${name} should end at least 2px above ${cost}`).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  test('each button label sits inside its button', async ({ page }) => {
+    const boxes = await readTextBoxes(page);
+    const layout = await page.evaluate(() => window.__gameTest.getTowerButtons());
+    expect(layout.buttons).toHaveLength(3);
+    layout.buttons.forEach((b: { x: number; y: number; w: number; h: number }, i: number) => {
+      const { name, cost } = BUTTON_SPECS[i];
+      for (const t of [boxes[name], boxes[cost]]) {
+        expect(t.left, t.text).toBeGreaterThanOrEqual(b.x);
+        expect(t.right, t.text).toBeLessThanOrEqual(b.x + b.w);
+        expect(t.top, t.text).toBeGreaterThanOrEqual(b.y);
+        expect(t.bottom, t.text).toBeLessThanOrEqual(b.y + b.h);
+      }
+    });
+  });
+
+  for (const width of [320, 390, 768, 1280]) {
+    test(`no horizontal scroll at ${width}px and every button is clickable`, async ({ page }) => {
+      await page.setViewportSize({ width, height: Math.round(width * 1.8) });
+      await page.reload();
+      await waitForGameTest(page);
+      const scroll = await page.evaluate(() => ({
+        sw: document.documentElement.scrollWidth,
+        iw: window.innerWidth,
+      }));
+      expect(scroll.sw).toBeLessThanOrEqual(scroll.iw);
+
+      await page.keyboard.press('Space');
+      await page.waitForFunction(() => window.__gameTest.getState() === 'ready');
+
+      const layout = await page.evaluate(() => window.__gameTest.getTowerButtons());
+      const box = (await page.locator('#game').boundingBox())!;
+      const scale = box.width / 480;
+
+      // The HTML hint overlay must not sit on top of the buttons, neither the
+      // default hint nor the longer one shown while placing a tower.
+      const strip = {
+        left: box.x + layout.buttons[0].x * scale,
+        right: box.x + (layout.buttons[2].x + layout.buttons[2].w) * scale,
+        top: box.y + layout.buttons[0].y * scale,
+        bottom: box.y + (layout.buttons[0].y + layout.buttons[0].h) * scale,
+      };
+      const hintClear = async (when: string) => {
+        const h = (await page.locator('#hint').boundingBox())!;
+        const hit = h.x < strip.right && strip.left < h.x + h.width && h.y < strip.bottom && strip.top < h.y + h.height;
+        expect(hit, `#hint overlaps the tower buttons (${when}) at ${width}px: ${JSON.stringify(h)} vs ${JSON.stringify(strip)}`).toBe(false);
+      };
+      await hintClear('default hint');
+
+      const names = ['Bolt', 'Pulse', 'Spike'];
+      for (let i = 0; i < 3; i++) {
+        const b = layout.buttons[i];
+        // Tap target size in CSS pixels. 44px is the target wherever the 16:9
+        // frame is wide enough to give it (>= 390px viewports).
+        if (width >= 390) {
+          expect(b.h * scale, `button ${i} height at ${width}px`).toBeGreaterThanOrEqual(44);
+          expect(b.w * scale, `button ${i} width at ${width}px`).toBeGreaterThanOrEqual(44);
+        }
+        // Click the bottom edge band of the button (inside the hotkey row) and
+        // make sure the game selected that tower.
+        await page.mouse.click(box.x + (b.x + b.w / 2) * scale, box.y + (b.y + b.h - 5) * scale);
+        await expect(page.locator('#hint')).toContainText(`placing ${names[i]}`);
+        await hintClear(`placing ${names[i]}`);
+        await page.keyboard.press('Escape');
+      }
+    });
+  }
 });
 
 // ---------------------------------------------------------------------------
