@@ -20,6 +20,8 @@ export default function GameCard({ game }: Props) {
   };
 
   const featured = game.featured === true;
+  // Featured hero cards and `wide` cards both span the full grid row on desktop.
+  const wide = featured || game.wide === true;
 
   return (
     <li
@@ -37,14 +39,14 @@ export default function GameCard({ game }: Props) {
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent focus-visible:shadow-lg',
         // Reduced motion: no lift, only colour/border change.
         'motion-reduce:hover:translate-y-0 motion-reduce:transition-[box-shadow,border-color]',
-        featured ? 'sm:col-span-2' : '',
+        wide ? 'sm:col-span-2' : '',
       ].join(' ')}
     >
       {/* Thumbnail frame: fixed aspect ratio (no layout shift), accent-tinted placeholder. */}
       <div
         className={[
           'relative aspect-video overflow-hidden bg-[color-mix(in_srgb,var(--accent)_15%,transparent)]',
-          featured && game.thumbWide ? 'sm:aspect-[1280/549]' : '',
+          wide && game.thumbWide ? 'sm:aspect-[1280/549]' : '',
         ].join(' ')}
       >
         <picture>

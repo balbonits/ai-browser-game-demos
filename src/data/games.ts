@@ -13,12 +13,17 @@ export type Game = {
   tags: string[];
   /** Short alt text for the card thumbnail (<=125 chars, starts with the title). */
   thumbAlt: string;
-  /** Card thumbnail, 960x540 (16:9), at public/games/<slug>/thumb.webp. */
+  /** Card thumbnail, 960x540 (16:9), at public/games/<slug>/thumb[-suffix].webp. */
   thumb: string;
   /** Featured game: shown first as a full-width hero card. */
   featured?: boolean;
   /** Optional wide (21:9, 1280x549) crop used by the hero card on wide screens. */
   thumbWide?: string;
+  /**
+   * Span both grid columns on desktop (using `thumbWide`) without the "Featured"
+   * hero treatment. Use it to keep an odd last card from sitting alone in a row.
+   */
+  wide?: boolean;
 };
 
 export const GAMES: Game[] = [
@@ -92,8 +97,11 @@ export const GAMES: Game[] = [
     description:
       'Idle basketball career sim with single-string hashed save and offline catch-up.',
     tags: ['Vanilla JS', 'DOM UI', 'localStorage', 'Idle'],
-    thumb: '/games/idle-hoops-rpg/thumb.webp',
+    // thumb-v2 / thumb-wide-v2: re-shot from the fixed layout (new names bust the immutable cache).
+    thumb: '/games/idle-hoops-rpg/thumb-v2.webp',
     thumbAlt:
       'Idle Hoops RPG: team dashboard showing the record, money and a roster with orange stat bars.',
+    thumbWide: '/games/idle-hoops-rpg/thumb-wide-v2.webp',
+    wide: true,
   },
 ];

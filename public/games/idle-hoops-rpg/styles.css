@@ -4,7 +4,8 @@
   --bg: hsl(240 10% 4%);
   --card: hsl(240 6% 10%);
   --border: hsl(240 4% 16%);
-  --muted: hsl(240 4% 46%);
+  /* Raised from 46% lightness: >= 4.9:1 on --bg, --card and --border (was 3.1:1 on pills). */
+  --muted: hsl(240 5% 60%);
   --fg: hsl(0 0% 98%);
   --accent: hsl(25 95% 53%);
   --radius: 0.625rem;
@@ -24,6 +25,9 @@ html, body {
   line-height: 1.5;
 }
 
+/* Backstop: nothing may cause sideways page scroll on phones. */
+body { overflow-x: hidden; }
+
 #app {
   min-height: 100vh;
   display: flex;
@@ -36,6 +40,7 @@ html, body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  width: 100%;
   max-width: 900px;
   margin: 0 auto;
   padding: 0 1rem 4rem;
@@ -148,6 +153,7 @@ html, body {
 /* ---- Tab bar ---- */
 
 .tab-bar {
+  position: relative;
   display: flex;
   gap: 0.25rem;
   border-bottom: 1px solid var(--border);
@@ -168,6 +174,12 @@ html, body {
   white-space: nowrap;
   transition: color 0.15s, border-color 0.15s;
 }
+/* Right-edge fade hints that more tabs are off-screen (class toggled by ui.js). */
+.tab-bar.fade-end {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+}
+
 .tab-btn:hover { color: var(--fg); }
 .tab-btn.active {
   color: var(--fg);
@@ -218,6 +230,7 @@ html, body {
 
 .player-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
@@ -228,11 +241,13 @@ html, body {
 
 .player-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
 
 .player-name {
+  min-width: 0;
   font-weight: 600;
   font-size: 0.9rem;
   white-space: nowrap;
@@ -247,6 +262,7 @@ html, body {
   font-size: 0.7rem;
   color: var(--muted);
   display: inline-block;
+  align-self: flex-start; /* hug the text instead of stretching across the card */
   margin-top: 0.1rem;
 }
 
@@ -629,12 +645,56 @@ html, body {
   to   { opacity: 1; transform: translateX(0); }
 }
 
+/* ---- Navigation back to the landing page + credits footer ---- */
+
+.back-link {
+  align-self: flex-start;
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.back-link:hover,
+.back-link:focus-visible { color: var(--fg); text-decoration: underline; }
+
+.site-footer {
+  margin-top: auto;
+  padding-top: 2rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+}
+.site-footer a { color: inherit; text-decoration: underline; }
+.site-footer a:hover { color: var(--fg); }
+
+/* ---- Touch targets: >= 44px tall ---- */
+@media (pointer: coarse), (max-width: 480px) {
+  .btn,
+  .tab-btn,
+  .upgrade-buy { min-height: 44px; }
+  .btn { justify-content: center; }
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 480px) {
   .record { font-size: 1.5rem; }
-  .player-grid { grid-template-columns: 1fr 1fr; }
+  /* minmax(0, 1fr) lets columns shrink below their content, so no sideways scroll. */
+  .player-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .game-row { grid-template-columns: 3.5rem 1.5rem 4rem 1fr; }
   .game-top { display: none; }
-  .achievement-grid { grid-template-columns: 1fr 1fr; }
-  .toast-container { right: 0.5rem; bottom: 0.5rem; max-width: 90vw; }
+  .achievement-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Toasts at the top on phones so they never cover the bottom action buttons. */
+  .toast-container {
+    top: 0.5rem;
+    bottom: auto;
+    left: 0.5rem;
+    right: 0.5rem;
+    max-width: none;
+  }
+  .toast { animation-name: toastInTop; }
+}
+
+@keyframes toastInTop {
+  from { opacity: 0; transform: translateY(-1rem); }
+  to   { opacity: 1; transform: translateY(0); }
 }
