@@ -13,7 +13,7 @@ export type Game = {
   tags: string[];
   /** Short alt text for the card thumbnail (<=125 chars, starts with the title). */
   thumbAlt: string;
-  /** Card thumbnail, 960x540 (16:9), at public/games/<slug>/thumb.webp. */
+  /** Card thumbnail, 960x540 (16:9), at public/games/<slug>/thumb[-suffix].webp. */
   thumb: string;
   /** Featured game: shown first as a full-width hero card. */
   featured?: boolean;
@@ -56,9 +56,10 @@ export const GAMES: Game[] = [
     description:
       'First-person shooter with a polygonal gun and 3D block enemies.',
     tags: ['Three.js', 'WebGL', 'Web Audio'],
-    thumb: '/games/block-fps/thumb.webp',
+    // thumb-v2: brighter re-shoot mid wave 3 (new name busts the immutable cache).
+    thumb: '/games/block-fps/thumb-v2.webp',
     thumbAlt:
-      'Block Arena: first-person view of a dark wireframe arena with red block enemies and a cyan gun.',
+      'Block Arena: first-person view of a neon wireframe arena with yellow block enemies, pillars and a cyan gun.',
   },
   {
     slug: 'maze-runner',

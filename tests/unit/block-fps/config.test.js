@@ -1,15 +1,15 @@
-// Unit tests for block-fps/config.js — pure data sanity checks.
+// Unit tests for block-fps/config.js â€” pure data sanity checks.
 //
 // config.js does `import * as THREE from 'three'`. THREE must be installed as
 // a devDependency so Vitest can resolve the bare specifier in Node. The game
-// still loads three from the CDN import-map at runtime — this devDep is
+// still loads three from the CDN import-map at runtime â€” this devDep is
 // test-only scaffolding.
 //
 // All tests here are data-only. No DOM, no canvas, no scene.
 
 import { describe, it, expect } from 'vitest';
 import {
-  ENEMIES, WAVES, TOTAL_WAVES, endlessMultipliers,
+  ENEMIES, WAVES, TOTAL_WAVES, endlessMultipliers, waveLabel,
   STATE, STORAGE, PLAYER_HP, GUN_DAMAGE, GUN_RATE,
 } from '../../../public/games/block-fps/config.js';
 
@@ -17,7 +17,7 @@ import {
 // ENEMIES table
 // ---------------------------------------------------------------------------
 
-describe('config — ENEMIES table', () => {
+describe('config â€” ENEMIES table', () => {
   it('has grunt, charger, and heavy entries', () => {
     expect(ENEMIES).toHaveProperty('grunt');
     expect(ENEMIES).toHaveProperty('charger');
@@ -57,7 +57,7 @@ describe('config — ENEMIES table', () => {
 // WAVES table
 // ---------------------------------------------------------------------------
 
-describe('config — WAVES table', () => {
+describe('config â€” WAVES table', () => {
   it('WAVES has 8 wave templates (TOTAL_WAVES is derived from it)', () => {
     expect(WAVES).toHaveLength(8);
     expect(TOTAL_WAVES).toBe(8);
@@ -105,7 +105,7 @@ describe('config — WAVES table', () => {
 // endlessMultipliers
 // ---------------------------------------------------------------------------
 
-describe('config — endlessMultipliers', () => {
+describe('config â€” endlessMultipliers', () => {
   it('returns hp === 1 for index === 0 (before any waves)', () => {
     expect(endlessMultipliers(0).hp).toBe(1);
   });
@@ -140,7 +140,7 @@ describe('config — endlessMultipliers', () => {
 // Game constants
 // ---------------------------------------------------------------------------
 
-describe('config — game constants', () => {
+describe('config â€” game constants', () => {
   it('PLAYER_HP is 100', () => {
     expect(PLAYER_HP).toBe(100);
   });
@@ -164,5 +164,33 @@ describe('config — game constants', () => {
     for (const val of Object.values(STORAGE)) {
       expect(val).toMatch(/^block-fps:/);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// waveLabel: HUD shows the wave in progress / last cleared, never the next one
+// ---------------------------------------------------------------------------
+
+describe('config - waveLabel', () => {
+  it('shows the active wave while it is running', () => {
+    expect(waveLabel(1, 0)).toBe('WAVE 1');
+    expect(waveLabel(3, 2)).toBe('WAVE 3');
+  });
+
+  it('between waves shows the last cleared wave, not the upcoming one', () => {
+    expect(waveLabel(0, 2)).toBe('WAVE 2');
+    expect(waveLabel(0, 0)).toBe('WAVE 0');
+  });
+
+  it('never shows completed + 1 when no wave is active', () => {
+    for (let done = 0; done < 12; done++) {
+      expect(waveLabel(0, done)).not.toContain(`WAVE ${done + 1}`);
+    }
+  });
+
+  it('adds the endless glyph only past the named campaign', () => {
+    expect(waveLabel(TOTAL_WAVES, TOTAL_WAVES - 1)).toBe(`WAVE ${TOTAL_WAVES}`);
+    expect(waveLabel(TOTAL_WAVES + 1, TOTAL_WAVES)).toBe(`WAVE ${TOTAL_WAVES + 1} \u221e`);
+    expect(waveLabel(0, TOTAL_WAVES + 2)).toBe(`WAVE ${TOTAL_WAVES + 2} \u221e`);
   });
 });

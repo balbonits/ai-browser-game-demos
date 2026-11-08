@@ -35,8 +35,10 @@ function webpSize(buf) {
 
 describe('game card thumbnails', () => {
   it('registers a thumbnail for every game at the conventional path', () => {
+    // thumb.webp, or a cache-busting rename such as thumb-v2.webp (vercel.json
+    // serves thumbnails as immutable for a year, so replacements get new names).
     for (const g of GAMES) {
-      expect(g.thumb, g.slug).toBe(`/games/${g.slug}/thumb.webp`);
+      expect(g.thumb, g.slug).toMatch(new RegExp(`^/games/${g.slug}/thumb(-[a-z0-9]+)*\\.webp$`));
     }
   });
 
