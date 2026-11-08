@@ -569,6 +569,22 @@ function drawPlayer() {
 
 const FONT_MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace';
 
+// Right edge (canvas px) the HUD may draw up to. The HTML sound button floats over
+// the top-right of the canvas, so the right-hand label stops short of it. Reading
+// the button's real position keeps this correct at every frame width (the button
+// is a fixed CSS size while the canvas scales with the viewport).
+function hudRightEdge() {
+  const cr = canvas.getBoundingClientRect();
+  if (!cr.width) return CW - 6;
+  const btn = soundBtn.getBoundingClientRect();
+  if (!btn.width) return CW - 6;
+  const btnLeft = (btn.left - cr.left) * (CW / cr.width);
+  return Math.min(CW - 6, btnLeft - 6);
+}
+
+// Last drawn HUD right-label bounds in canvas px (exposed to tests via __gameTest).
+let hudLayout = { rightLeft: 0, rightRight: 0 };
+
 function drawHUD() {
   const diff = DIFFICULTIES[diffIdx];
 
@@ -597,7 +613,10 @@ function drawHUD() {
   const collected = gems.filter(g => g.collected).length;
   const gemStr = gems.length > 0 ? `GEM ${collected}/${gems.length}` : '';
   ctx.textAlign = 'right';
-  ctx.fillText(`${diff.label.toUpperCase()} · ${gemStr}`, CW - 6, 11);
+  const rightLabel = `${diff.label.toUpperCase()} · ${gemStr}`;
+  const rightEdge = hudRightEdge();
+  ctx.fillText(rightLabel, rightEdge, 11);
+  hudLayout = { rightLeft: rightEdge - ctx.measureText(rightLabel).width, rightRight: rightEdge };
 
   // Best time.
   const best = getBest(maze.seed, diffIdx);
@@ -1197,5 +1216,7 @@ if (new URLSearchParams(location.search).get('test') === '1') {
     getElapsed:  () => elapsed,
     getStartTs:  () => startTs,
     getPromptActive: () => promptActive,
+    // HUD right label bounds in canvas px, plus the canvas width (480).
+    getHudLayout: () => ({ ...hudLayout, canvasWidth: CW }),
   };
 }

@@ -23,6 +23,7 @@ Everything since the 0.1.0 tag (2026-04-25), inferred from git history. Dates ar
 - Docs refresh: README, `docs/`, `.claude/agents/`, `CLAUDE.md`, and `AGENTS.md` updated to the React/Vite setup, `npm install`, current paths (`src/data/games.ts`, `public/games/<slug>/`, `public/credits.html`), Node 22, the test commands, and the pre-push hook.
 
 ### Fixed
+- **Maze Runner: sound button no longer covers the HUD** (2026-10-18). The 2rem HTML sound button floats over the canvas's top-right and sat on the "SMALL · GEM 0/3" label (worst on phones, where the canvas shrinks but the button does not). The canvas HUD now measures the button's real position each frame and right-aligns its label to the left of it. E2E checks at 390px, 320px and 1280px; new read-only `getHudLayout()` test hook.
 - Neon Blocks: `Board.clearRows` corrupted every multi-row line clear (doubles, triples, Tetrises) since v0.1; replaced with single-pass bottom-up compaction and covered by unit tests (2026-05-01).
 - Idle Hoops RPG: tab clicks did nothing because the `el()` helper stringified `undefined` attribute values (2026-05-15).
 

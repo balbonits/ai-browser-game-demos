@@ -1,7 +1,7 @@
 // Maze Runner E2E tests.
 //
 // Tests navigate with ?test=1 so window.__gameTest is available.
-// All state reads go through the test hook — never through canvas pixels.
+// All state reads go through the test hook â€” never through canvas pixels.
 // Use waitForFunction instead of waitForTimeout for state changes.
 //
 // URL uses explicit index.html: the React dev server intercepts directory
@@ -12,7 +12,7 @@ import { waitForGameTest, readGameTest } from '../shared/test-hooks.js';
 
 const GAME_URL = '/games/maze-runner/index.html?test=1';
 
-// Wall bit constants — mirror maze.js exports so tests are self-contained.
+// Wall bit constants â€” mirror maze.js exports so tests are self-contained.
 const N = 1, E = 2, S = 4, W = 8;
 
 // Map a wall bit to the Arrow key that moves in that direction.
@@ -24,7 +24,7 @@ const wallToKey: Record<number, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Splash — initial state
+// Splash â€” initial state
 // ---------------------------------------------------------------------------
 
 test.describe('Maze Runner splash', () => {
@@ -61,7 +61,7 @@ test.describe('Maze Runner splash', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Splash → game start
+// Splash â†’ game start
 // ---------------------------------------------------------------------------
 
 test.describe('Maze Runner game start', () => {
@@ -96,16 +96,16 @@ test.describe('Maze Runner game start', () => {
     await page.keyboard.press('Space');
     await page.waitForFunction(() => window.__gameTest.getState() === 'PLAYING');
     const exitCell = await readGameTest(page, 'getExit');
-    // Small: 11 cols × 9 rows → exit at (10, 8).
+    // Small: 11 cols Ã— 9 rows â†’ exit at (10, 8).
     expect(exitCell).toEqual({ col: 10, row: 8 });
   });
 });
 
 // ---------------------------------------------------------------------------
-// Gameplay — movement
+// Gameplay â€” movement
 // ---------------------------------------------------------------------------
 
-test.describe('Maze Runner gameplay — movement', () => {
+test.describe('Maze Runner gameplay â€” movement', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(GAME_URL);
     await waitForGameTest(page);
@@ -172,7 +172,7 @@ test.describe('Maze Runner gameplay — movement', () => {
 // Return to splash
 // ---------------------------------------------------------------------------
 
-test.describe('Maze Runner — R key returns to splash', () => {
+test.describe('Maze Runner â€” R key returns to splash', () => {
   test('pressing R during PLAYING returns state to SPLASH', async ({ page }) => {
     await page.goto(GAME_URL);
     await waitForGameTest(page);
@@ -229,4 +229,46 @@ test.describe('Maze Runner mute', () => {
     const muted = await page.evaluate(() => localStorage.getItem('maze-runner:muted'));
     expect(muted).toBe('0');
   });
+});
+
+// ---------------------------------------------------------------------------
+// HUD vs the HTML sound button. The button floats over the canvas's top-right;
+// the canvas-drawn HUD must leave room for it at every viewport width.
+// ---------------------------------------------------------------------------
+
+test.describe('Maze Runner: sound button does not overlap the HUD', () => {
+  for (const vp of [
+    { width: 390, height: 844 },
+    { width: 320, height: 640 },
+    { width: 1280, height: 720 },
+  ]) {
+    test(`at ${vp.width}px the HUD's right label ends before the sound button`, async ({ page }) => {
+      await page.setViewportSize(vp);
+      await page.goto(GAME_URL);
+      await waitForGameTest(page);
+      await page.keyboard.press('1'); // Small
+      await page.keyboard.press('Space');
+      await page.waitForFunction(() => (window as any).__gameTest.getState() === 'PLAYING');
+      // Let at least one frame draw the HUD with the final layout.
+      await page.waitForTimeout(150);
+
+      const m = await page.evaluate(() => {
+        const hud = (window as any).__gameTest.getHudLayout();
+        const cr = document.getElementById('game')!.getBoundingClientRect();
+        const btn = document.getElementById('sound-toggle')!.getBoundingClientRect();
+        const k = cr.width / hud.canvasWidth; // canvas px -> CSS px
+        return {
+          labelLeft: cr.left + hud.rightLeft * k,
+          labelRight: cr.left + hud.rightRight * k,
+          btnLeft: btn.left,
+          btnRight: btn.right,
+          frameRight: cr.right,
+          centerRight: cr.left + (hud.canvasWidth / 2 + 30) * k, // timer is centred
+        };
+      });
+      expect(m.labelRight).toBeLessThanOrEqual(m.btnLeft);          // no overlap with the button
+      expect(m.btnRight).toBeLessThanOrEqual(m.frameRight + 0.5);   // button still inside the frame
+      expect(m.labelLeft).toBeGreaterThanOrEqual(m.centerRight);    // and clear of the timer
+    });
+  }
 });
